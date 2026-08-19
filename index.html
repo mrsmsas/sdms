@@ -116,7 +116,6 @@
   tr:last-child td{border-bottom:none;}
   .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:.7rem; font-weight:700; white-space:nowrap;}
   .b-aktif{background:var(--ok-bg); color:var(--ok-text);}
-  .b-akan{background:var(--warn-bg); color:var(--warn);}
   .b-tamat{background:var(--bad-bg); color:var(--bad);}
   .b-menunggu{background:var(--grey-bg); color:var(--grey);}
   .b-ditolak{background:var(--serious-bg); color:var(--serious);}
@@ -141,13 +140,8 @@
   .toast.err{background:var(--bad);}
   .note{background:#fff8e6; border:1px solid #f0e0a8; color:#7a5b00; border-radius:10px; padding:10px 12px; font-size:.8rem; margin-top:10px;}
   footer{text-align:center; color:var(--muted); font-size:.7rem; padding:14px 20px;}
-  /* Bar chart */
-  .barchart-row{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
-  .barchart-label{width:96px; font-size:.72rem; color:var(--muted); text-align:right; flex-shrink:0;}
-  .barchart-track{flex:1; background:#eef1f5; border-radius:4px; height:14px; position:relative;}
-  .barchart-fill{height:14px; border-radius:0 4px 4px 0; min-width:2px;}
-  .barchart-value{width:26px; font-size:.72rem; font-weight:700; color:var(--ink); flex-shrink:0;}
-  .chart-wrap{margin-top:6px;}
+  .userrow-role{display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap;}
+  .userrow-role select{width:auto; flex:1 1 160px;}
   /* Modal */
   .modal-overlay{
     position:fixed; inset:0; background:rgba(11,11,11,.45); display:none;
@@ -189,7 +183,7 @@
   <section class="view active" id="view-borang">
     <div class="card">
       <h2>Borang Pendaftaran Telefon Pintar</h2>
-      <p class="sub">Sila lengkapkan maklumat di bawah dengan tepat. Tiada log masuk diperlukan. Permohonan akan berstatus "Menunggu Kelulusan" sehingga disemak oleh Admin.</p>
+      <p class="sub">Sila lengkapkan maklumat di bawah dengan tepat. Tiada log masuk diperlukan. Permohonan akan berstatus "Menunggu Giliran" sehingga disemak oleh Admin.</p>
 
       <form id="regForm">
         <div class="grid2">
@@ -255,7 +249,7 @@
         <div class="field">
           <label>Muat Naik Surat Kebenaran <span style="font-weight:400; color:var(--faint);">(PDF / Imej, jika ada)</span></label>
           <input type="file" id="f_surat" accept=".pdf,.jpg,.jpeg,.png">
-          <div class="hint">Surat kebenaran daripada ibu bapa/penjaga atau pihak sekolah (jika berkaitan). Fail dimuat naik terus ke storan selamat (Supabase Storage) dan hanya boleh dilihat oleh Admin/Warden/Homeroom.</div>
+          <div class="hint">Surat kebenaran daripada ibu bapa/penjaga atau pihak sekolah (jika berkaitan). Fail dimuat naik terus ke storan selamat (Supabase Storage) dan hanya boleh dilihat oleh Guru &amp; Admin.</div>
         </div>
 
         <div class="checkline">
@@ -293,25 +287,6 @@
     </div>
   </section>
 
-  <!-- ================= DASHBOARD ================= -->
-  <section class="view" id="view-dashboard">
-    <div class="card">
-      <h2>Dashboard</h2>
-      <p class="sub" id="dashScope">Gambaran keseluruhan status pendaftaran telefon pintar.</p>
-      <div class="grid6" id="dashStats"></div>
-    </div>
-
-    <div class="card">
-      <h2>Mengikut Status</h2>
-      <div class="chart-wrap" id="chartStatus"></div>
-    </div>
-
-    <div class="card">
-      <h2>Mengikut Kelas</h2>
-      <div class="chart-wrap" id="chartKelas"></div>
-    </div>
-  </section>
-
   <!-- ================= SEMAKAN ================= -->
   <section class="view" id="view-semakan">
     <div class="card">
@@ -322,9 +297,8 @@
         <select id="semFilter">
           <option value="">Semua Status</option>
           <option value="Aktif">Aktif</option>
-          <option value="Akan Tamat">Akan Tamat</option>
-          <option value="Tamat Tempoh">Tamat Tempoh</option>
-          <option value="Menunggu Kelulusan">Menunggu Kelulusan</option>
+          <option value="Tamat">Tamat</option>
+          <option value="Menunggu Giliran">Menunggu Giliran</option>
           <option value="Ditolak">Ditolak</option>
         </select>
       </div>
@@ -346,9 +320,8 @@
         <select id="trkFilter">
           <option value="">Semua Status</option>
           <option value="Aktif">Aktif</option>
-          <option value="Akan Tamat">Akan Tamat</option>
-          <option value="Tamat Tempoh">Tamat Tempoh</option>
-          <option value="Menunggu Kelulusan">Menunggu Kelulusan</option>
+          <option value="Tamat">Tamat</option>
+          <option value="Menunggu Giliran">Menunggu Giliran</option>
           <option value="Ditolak">Ditolak</option>
         </select>
         <span style="margin-left:auto; font-size:.8rem; color:var(--muted);">Uji Tarikh (paparan sahaja):</span>
@@ -377,7 +350,7 @@
       <h2>Pecahan mengikut Kelas</h2>
       <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>Kelas</th><th>Aktif</th><th>Akan Tamat</th><th>Tamat Tempoh</th><th>Menunggu</th><th>Ditolak</th><th>Jumlah</th></tr></thead>
+          <thead><tr><th>Kelas</th><th>Aktif</th><th>Tamat</th><th>Menunggu Giliran</th><th>Ditolak</th><th>Jumlah</th></tr></thead>
           <tbody id="laporanKelasBody"></tbody>
         </table>
       </div>
@@ -387,7 +360,7 @@
       <h2>Pecahan mengikut Homeroom</h2>
       <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>Homeroom</th><th>Aktif</th><th>Akan Tamat</th><th>Tamat Tempoh</th><th>Menunggu</th><th>Ditolak</th><th>Jumlah</th></tr></thead>
+          <thead><tr><th>Homeroom</th><th>Aktif</th><th>Tamat</th><th>Menunggu Giliran</th><th>Ditolak</th><th>Jumlah</th></tr></thead>
           <tbody id="laporanHomeroomBody"></tbody>
         </table>
       </div>
@@ -403,9 +376,49 @@
     </div>
 
     <div class="card">
-      <h2>Menunggu Kelulusan</h2>
+      <h2>Menunggu Giliran</h2>
       <div class="reclist" id="pendingList"></div>
-      <div class="empty" id="pendingEmpty" style="display:none;">Tiada permohonan menunggu kelulusan.</div>
+      <div class="empty" id="pendingEmpty" style="display:none;">Tiada permohonan menunggu giliran.</div>
+    </div>
+  </section>
+
+  <!-- ================= URUS PENGGUNA (ADMIN) ================= -->
+  <section class="view" id="view-urus-pengguna">
+    <div class="card">
+      <h2>Cipta Akaun Guru</h2>
+      <p class="sub">Admin cipta akaun log masuk untuk guru secara terus di sini &mdash; guru tidak perlu (dan tidak boleh) daftar akaun sendiri.</p>
+      <form id="createUserForm">
+        <div class="field">
+          <label>Nama Penuh *</label>
+          <input type="text" id="nu_nama" required placeholder="Contoh: Nurul Ain binti Zainal">
+        </div>
+        <div class="field">
+          <label>Emel *</label>
+          <input type="email" id="nu_emel" required placeholder="Contoh: nurulain@mara.gov.my">
+        </div>
+        <div class="field">
+          <label>Kata Laluan Sementara *</label>
+          <input type="text" id="nu_password" required minlength="6" placeholder="Sekurang-kurangnya 6 aksara">
+          <div class="hint">Beritahu guru berkenaan kata laluan ini secara peribadi (WhatsApp/lisan) &mdash; mereka boleh log masuk terus dengannya.</div>
+        </div>
+        <div class="field">
+          <label>Peranan *</label>
+          <select id="nu_role" required>
+            <option value="guru">Guru (Pengguna Biasa)</option>
+            <option value="ketua_warden">Admin &mdash; Ketua Warden</option>
+            <option value="timbalan_pengetua">Admin &mdash; Timbalan Pengetua</option>
+          </select>
+        </div>
+        <div class="hint" id="createUserError" style="color:var(--bad);"></div>
+        <button type="submit" class="btn btn-primary" id="btnCreateUser" style="margin-top:6px;">Cipta Akaun</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Senarai Pengguna</h2>
+      <p class="sub">Semua akaun guru &amp; admin dalam sistem.</p>
+      <div class="reclist" id="userList"></div>
+      <div class="empty" id="userListEmpty" style="display:none;">Tiada pengguna.</div>
     </div>
   </section>
 
@@ -414,13 +427,13 @@
 <footer>MRSM Sultan Azlan Shah (SAS) &mdash; Disokong oleh Supabase.</footer>
 
 <nav class="tabbar no-print">
-  <button data-view="borang" data-roles="pelajar,warden,homeroom,ketua_warden,timbalan_pengetua" class="active"><span class="ic">📝</span>Borang</button>
-  <button data-view="semakstatus" data-roles="pelajar,warden,homeroom,ketua_warden,timbalan_pengetua"><span class="ic">🔍</span>Semak</button>
-  <button data-view="dashboard" data-roles="warden,homeroom,ketua_warden,timbalan_pengetua"><span class="ic">📊</span>Dashboard</button>
-  <button data-view="semakan" data-roles="warden,homeroom,ketua_warden,timbalan_pengetua"><span class="ic">📋</span>Semakan</button>
-  <button data-view="tracker" data-roles="warden,homeroom,ketua_warden,timbalan_pengetua"><span class="ic">⏱️</span>Tracker</button>
-  <button data-view="laporan" data-roles="warden,homeroom,ketua_warden,timbalan_pengetua"><span class="ic">📈</span>Laporan</button>
+  <button data-view="borang" data-roles="pelajar,guru,ketua_warden,timbalan_pengetua" class="active"><span class="ic">📝</span>Borang</button>
+  <button data-view="semakstatus" data-roles="pelajar,guru,ketua_warden,timbalan_pengetua"><span class="ic">🔍</span>Semak</button>
+  <button data-view="semakan" data-roles="guru,ketua_warden,timbalan_pengetua"><span class="ic">📋</span>Semakan</button>
+  <button data-view="tracker" data-roles="guru,ketua_warden,timbalan_pengetua"><span class="ic">⏱️</span>Tracker</button>
+  <button data-view="laporan" data-roles="ketua_warden,timbalan_pengetua"><span class="ic">📈</span>Laporan</button>
   <button data-view="kelulusan" data-roles="ketua_warden,timbalan_pengetua"><span class="ic">✅</span>Lulus</button>
+  <button data-view="urus-pengguna" data-roles="ketua_warden,timbalan_pengetua"><span class="ic">👤</span>Pengguna</button>
 </nav>
 
 </div><!-- /app-shell -->
@@ -431,18 +444,13 @@
 <div class="modal-overlay no-print" id="loginOverlay">
   <div class="modal">
     <h3>Log Masuk Staf</h3>
-    <p class="hint" style="margin-bottom:14px;">Untuk Warden, Homeroom, Ketua Warden &amp; Timbalan Pengetua. Pelajar tidak perlu log masuk untuk menghantar Borang Pendaftaran.</p>
+    <p class="hint" style="margin-bottom:14px;">Untuk Guru, Ketua Warden &amp; Timbalan Pengetua. Akaun dicipta oleh Admin di tab "Pengguna" &mdash; tiada pendaftaran sendiri. Pelajar tidak perlu log masuk untuk menghantar Borang Pendaftaran.</p>
     <form id="loginForm">
-      <div class="field" id="li_namaWrap" style="display:none;">
-        <label>Nama Penuh (untuk pendaftaran akaun baharu)</label>
-        <input type="text" id="li_nama">
-      </div>
       <div class="field"><label>Emel</label><input type="email" id="li_email" required></div>
       <div class="field"><label>Kata Laluan</label><input type="password" id="li_password" required minlength="6"></div>
       <div class="hint" id="loginError" style="color:var(--bad);"></div>
       <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
         <button type="submit" class="btn btn-primary" id="btnDoLogin">Log Masuk</button>
-        <button type="button" class="btn btn-ghost" id="btnSignup">Daftar Akaun Baharu</button>
         <button type="button" class="btn btn-ghost" id="loginCancel">Batal</button>
       </div>
     </form>
@@ -537,21 +545,21 @@
   let profile = null;      // row from public.profiles for the current user (nama, role, homeroom)
   let currentRole = 'pelajar';
   let applications = [];   // rows fetched from Supabase, mapped to camelCase
+  let users = [];          // profiles rows, admin-only (Urus Pengguna)
 
   const ROLE_LABELS = {
-    pelajar:'Pelajar', warden:'Warden', homeroom:'Homeroom',
+    pelajar:'Pelajar', guru:'Guru',
     ketua_warden:'Ketua Warden', timbalan_pengetua:'Timbalan Pengetua'
   };
   const roleHints = {
     pelajar: 'Akses: hantar Borang Pendaftaran &amp; Semak Status (tanpa log masuk).',
-    warden: 'Akses (User): Dashboard, Semakan (lihat), E-Tracker, Laporan.',
-    homeroom: 'Akses (User): Dashboard, Semakan (lihat), E-Tracker, Laporan &mdash; terhad kepada homeroom sendiri.',
-    ketua_warden: 'Akses (Admin): semua modul termasuk Edit, Padam &amp; Kelulusan.',
-    timbalan_pengetua: 'Akses (Admin): semua modul termasuk Edit, Padam &amp; Kelulusan.'
+    guru: 'Akses (Guru): Borang, Semak Status, Semakan &amp; E-Tracker.',
+    ketua_warden: 'Akses (Admin): semua modul termasuk Laporan, Kelulusan &amp; Urus Pengguna.',
+    timbalan_pengetua: 'Akses (Admin): semua modul termasuk Laporan, Kelulusan &amp; Urus Pengguna.'
   };
   const defaultViewByRole = {
-    pelajar: 'borang', warden: 'dashboard', homeroom: 'dashboard',
-    ketua_warden: 'dashboard', timbalan_pengetua: 'dashboard'
+    pelajar: 'borang', guru: 'semakan',
+    ketua_warden: 'kelulusan', timbalan_pengetua: 'kelulusan'
   };
   function isAdminRole(role){ return role === 'ketua_warden' || role === 'timbalan_pengetua'; }
 
@@ -567,18 +575,18 @@
   }
 
   // ---------- Status computation (client-side, honours "Uji Tarikh") ----------
+  // 4 status sahaja: Aktif, Tamat, Menunggu Giliran, Ditolak.
   function computeStatus(app){
-    if(app.status === 'Menunggu Kelulusan' || app.status === 'Ditolak') return app.status;
+    if(app.status === 'Menunggu Giliran' || app.status === 'Ditolak') return app.status;
     const now = todayStr();
     const daysLeft = daysBetween(now, app.tarikhTamat);
-    if(daysLeft < 0) return 'Tamat Tempoh';
-    if(daysLeft <= 7) return 'Akan Tamat';
+    if(daysLeft < 0) return 'Tamat';
     return 'Aktif';
   }
   function badgeClass(status){
     return {
-      'Aktif':'b-aktif','Akan Tamat':'b-akan','Tamat Tempoh':'b-tamat',
-      'Menunggu Kelulusan':'b-menunggu','Ditolak':'b-ditolak'
+      'Aktif':'b-aktif','Tamat':'b-tamat',
+      'Menunggu Giliran':'b-menunggu','Ditolak':'b-ditolak'
     }[status] || 'b-menunggu';
   }
 
@@ -593,6 +601,17 @@
       return;
     }
     applications = (data || []).map(mapRow);
+  }
+
+  async function fetchUsers(){
+    if(!isAdminRole(currentRole)){ users = []; return; }
+    const { data, error } = await sb.from('profiles').select('*').order('nama');
+    if(error){
+      console.error(error);
+      users = [];
+      return;
+    }
+    users = data || [];
   }
 
   async function viewSurat(path){
@@ -642,33 +661,10 @@
 
   function openLogin(){
     document.getElementById('loginError').textContent = '';
-    document.getElementById('li_namaWrap').style.display = 'none';
     document.getElementById('loginForm').reset();
     document.getElementById('loginOverlay').classList.add('show');
   }
   document.getElementById('loginCancel').addEventListener('click', ()=> document.getElementById('loginOverlay').classList.remove('show'));
-  document.getElementById('btnSignup').addEventListener('click', async ()=>{
-    const namaWrap = document.getElementById('li_namaWrap');
-    if(namaWrap.style.display === 'none'){
-      namaWrap.style.display = 'block';
-      document.getElementById('loginError').textContent = 'Isi nama penuh, emel &amp; kata laluan, kemudian klik "Daftar Akaun Baharu" sekali lagi.';
-      return;
-    }
-    const nama = document.getElementById('li_nama').value.trim();
-    const email = document.getElementById('li_email').value.trim();
-    const password = document.getElementById('li_password').value;
-    if(!nama || !email || !password){
-      document.getElementById('loginError').textContent = 'Sila lengkapkan nama, emel dan kata laluan.';
-      return;
-    }
-    const { error } = await sb.auth.signUp({ email, password, options: { data: { nama } } });
-    if(error){
-      document.getElementById('loginError').textContent = error.message;
-      return;
-    }
-    document.getElementById('loginOverlay').classList.remove('show');
-    toast('Akaun dicipta. Sila hubungi Ketua Warden/Timbalan Pengetua untuk aktifkan peranan anda.');
-  });
   document.getElementById('loginForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
     const email = document.getElementById('li_email').value.trim();
@@ -688,6 +684,7 @@
     currentRole = profile ? profile.role : 'pelajar';
     renderAuthStatus();
     await fetchApplications();
+    await fetchUsers();
     await applyRoleVisibility();
   });
 
@@ -781,14 +778,14 @@
         tarikh_akhir_diminta: f_akhir.value,
         surat_path: suratPath,
         surat_nama: suratNama,
-        status: 'Menunggu Kelulusan'
+        status: 'Menunggu Giliran'
       };
       const { error } = await sb.from('applications').insert(payload);
       if(error) throw new Error(error.message);
 
       this.reset();
       document.getElementById('tempohHint').textContent = '';
-      toast('Permohonan berjaya dihantar. Status: Menunggu Kelulusan.');
+      toast('Permohonan berjaya dihantar. Status: Menunggu Giliran.');
       if(currentRole !== 'pelajar') await refreshAndRenderAll();
     } catch(err){
       console.error(err);
@@ -820,7 +817,7 @@
     el.innerHTML = rows.map(r=>{
       const st = r.status_semasa;
       let extra = '';
-      if(st === 'Aktif' || st === 'Akan Tamat'){
+      if(st === 'Aktif'){
         extra = `
           <div style="margin-top:10px; font-size:.85rem;">
             <div>Tarikh Mula: <strong>${fmtDate(r.tarikh_mula)}</strong> &middot; Tarikh Tamat: <strong>${fmtDate(r.tarikh_tamat)}</strong> ${r.baki_hari!=null ? '('+r.baki_hari+' hari lagi)' : ''}</div>
@@ -831,7 +828,7 @@
               ${PERATURAN_RINGKAS.map(p=>`<li style="margin-bottom:4px;">${escHtml(p)}</li>`).join('')}
             </ul>
           </div>`;
-      } else if(st === 'Tamat Tempoh'){
+      } else if(st === 'Tamat'){
         extra = `<div style="margin-top:10px; font-size:.85rem;">Kebenaran telah tamat pada <strong>${fmtDate(r.tarikh_tamat)}</strong>. Sila hantar permohonan baharu jika masih diperlukan.</div>`;
       } else if(st === 'Ditolak'){
         extra = `<div style="margin-top:10px; font-size:.85rem;">Permohonan tidak diluluskan. Sila berjumpa Homeroom/Warden untuk maklumat lanjut.</div>`;
@@ -873,7 +870,7 @@
 
   // ---------- Stat helpers ----------
   function countByStatus(list){
-    const counts = { 'Aktif':0,'Akan Tamat':0,'Tamat Tempoh':0,'Menunggu Kelulusan':0,'Ditolak':0 };
+    const counts = { 'Aktif':0,'Tamat':0,'Menunggu Giliran':0,'Ditolak':0 };
     list.forEach(a => { const s = computeStatus(a); counts[s] = (counts[s]||0) + 1; });
     return counts;
   }
@@ -884,55 +881,17 @@
     if(withTotal) html += `<div class="stat"><div class="n">${total}</div><div class="l">JUMLAH KESELURUHAN</div></div>`;
     html += `
       <div class="stat s-ok"><div class="n">${c['Aktif']}</div><div class="l">AKTIF</div></div>
-      <div class="stat s-warn"><div class="n">${c['Akan Tamat']}</div><div class="l">AKAN TAMAT</div></div>
-      <div class="stat s-bad"><div class="n">${c['Tamat Tempoh']}</div><div class="l">TAMAT TEMPOH</div></div>
-      <div class="stat"><div class="n">${c['Menunggu Kelulusan']}</div><div class="l">MENUNGGU KELULUSAN</div></div>
+      <div class="stat s-bad"><div class="n">${c['Tamat']}</div><div class="l">TAMAT</div></div>
+      <div class="stat"><div class="n">${c['Menunggu Giliran']}</div><div class="l">MENUNGGU GILIRAN</div></div>
       <div class="stat s-serious"><div class="n">${c['Ditolak']}</div><div class="l">DITOLAK</div></div>
     `;
     document.getElementById(targetId).innerHTML = html;
   }
 
-  // ---------- Bar chart ----------
-  const STATUS_COLORS = {
-    'Aktif':'#0ca30c','Akan Tamat':'#c98500','Tamat Tempoh':'#d03b3b',
-    'Menunggu Kelulusan':'#898781','Ditolak':'#c1512b'
-  };
-  function renderBarChart(targetId, rows, colorFn){
-    const max = Math.max(1, ...rows.map(r=>r.value));
-    const el = document.getElementById(targetId);
-    if(!rows.length){ el.innerHTML = '<div class="empty">Tiada data.</div>'; return; }
-    el.innerHTML = rows.map(r => `
-      <div class="barchart-row">
-        <div class="barchart-label">${escHtml(r.label)}</div>
-        <div class="barchart-track"><div class="barchart-fill" style="width:${Math.max(2,(r.value/max*100))}%; background:${colorFn(r)};"></div></div>
-        <div class="barchart-value">${r.value}</div>
-      </div>
-    `).join('');
-  }
-
-  // ---------- Dashboard ----------
-  function renderDashboard(){
-    const list = applications;
-    document.getElementById('dashScope').textContent = (currentRole === 'homeroom' && profile && profile.homeroom)
-      ? 'Skop: ' + profile.homeroom
-      : 'Gambaran keseluruhan status pendaftaran telefon pintar.';
-    renderStatCards('dashStats', list, true);
-
-    const statusRows = Object.keys(STATUS_COLORS).map(s => ({label:s, value: countByStatus(list)[s] || 0}));
-    renderBarChart('chartStatus', statusRows, r => STATUS_COLORS[r.label]);
-
-    const byKelas = {};
-    list.forEach(a => { byKelas[a.kelas] = (byKelas[a.kelas]||0) + 1; });
-    const kelasRows = Object.keys(byKelas).sort().map(k => ({label:k, value:byKelas[k]}));
-    renderBarChart('chartKelas', kelasRows, () => '#2a78d6');
-  }
-
   // ---------- Semakan ----------
   function renderSemakan(){
     const list = applications;
-    document.getElementById('semakanScope').textContent = (currentRole === 'homeroom' && profile && profile.homeroom)
-      ? 'Skop: ' + profile.homeroom
-      : 'Senarai penuh rekod pendaftaran telefon pintar.';
+    document.getElementById('semakanScope').textContent = 'Senarai penuh rekod pendaftaran telefon pintar.';
     const search = document.getElementById('semSearch').value.toLowerCase();
     const filter = document.getElementById('semFilter').value;
     const body = document.getElementById('semakanBody');
@@ -1122,7 +1081,7 @@
     const map = {};
     list.forEach(a=>{
       const k = a[key];
-      if(!map[k]) map[k] = { 'Aktif':0,'Akan Tamat':0,'Tamat Tempoh':0,'Menunggu Kelulusan':0,'Ditolak':0, total:0 };
+      if(!map[k]) map[k] = { 'Aktif':0,'Tamat':0,'Menunggu Giliran':0,'Ditolak':0, total:0 };
       const st = computeStatus(a);
       map[k][st]++;
       map[k].total++;
@@ -1136,14 +1095,14 @@
     const byKelas = breakdownBy(list, 'kelas');
     document.getElementById('laporanKelasBody').innerHTML = Object.keys(byKelas).sort().map(k=>{
       const r = byKelas[k];
-      return `<tr><td>${escHtml(k)}</td><td>${r['Aktif']}</td><td>${r['Akan Tamat']}</td><td>${r['Tamat Tempoh']}</td><td>${r['Menunggu Kelulusan']}</td><td>${r['Ditolak']}</td><td><b>${r.total}</b></td></tr>`;
-    }).join('') || '<tr><td colspan="7" style="text-align:center; color:var(--muted);">Tiada data.</td></tr>';
+      return `<tr><td>${escHtml(k)}</td><td>${r['Aktif']}</td><td>${r['Tamat']}</td><td>${r['Menunggu Giliran']}</td><td>${r['Ditolak']}</td><td><b>${r.total}</b></td></tr>`;
+    }).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--muted);">Tiada data.</td></tr>';
 
     const byHomeroom = breakdownBy(list, 'homeroom');
     document.getElementById('laporanHomeroomBody').innerHTML = Object.keys(byHomeroom).sort().map(k=>{
       const r = byHomeroom[k];
-      return `<tr><td>${escHtml(k)}</td><td>${r['Aktif']}</td><td>${r['Akan Tamat']}</td><td>${r['Tamat Tempoh']}</td><td>${r['Menunggu Kelulusan']}</td><td>${r['Ditolak']}</td><td><b>${r.total}</b></td></tr>`;
-    }).join('') || '<tr><td colspan="7" style="text-align:center; color:var(--muted);">Tiada data.</td></tr>';
+      return `<tr><td>${escHtml(k)}</td><td>${r['Aktif']}</td><td>${r['Tamat']}</td><td>${r['Menunggu Giliran']}</td><td>${r['Ditolak']}</td><td><b>${r.total}</b></td></tr>`;
+    }).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--muted);">Tiada data.</td></tr>';
   }
   document.getElementById('btnPrint').addEventListener('click', ()=> window.print());
   document.getElementById('btnCSV').addEventListener('click', function(){
@@ -1217,7 +1176,7 @@
     const list = applications;
     renderStatCards('adminStatCards', list, true);
     const pendingWrap = document.getElementById('pendingList');
-    const pending = list.filter(a=>a.status==='Menunggu Kelulusan');
+    const pending = list.filter(a=>a.status==='Menunggu Giliran');
     document.getElementById('pendingEmpty').style.display = pending.length ? 'none' : 'block';
     pendingWrap.innerHTML = '';
     pending.forEach(a=>{
@@ -1266,16 +1225,120 @@
     });
   }
 
+  // ---------- Urus Pengguna (Admin cipta & urus akaun guru) ----------
+  const ROLE_OPTIONS_HTML = `
+    <option value="guru">Guru (Pengguna Biasa)</option>
+    <option value="ketua_warden">Admin &mdash; Ketua Warden</option>
+    <option value="timbalan_pengetua">Admin &mdash; Timbalan Pengetua</option>
+  `;
+  function renderUsers(){
+    const wrap = document.getElementById('userList');
+    wrap.innerHTML = '';
+    document.getElementById('userListEmpty').style.display = users.length ? 'none' : 'block';
+    users.forEach(u=>{
+      const isSelf = session && u.id === session.user.id;
+      const card = document.createElement('div');
+      card.className = 'reccard';
+      card.innerHTML = `
+        <div class="reccard-top">
+          <div>
+            <div class="reccard-name">${escHtml(u.nama)}${isSelf ? ' <span style="font-weight:400; color:var(--muted); font-size:.76rem;">(anda)</span>' : ''}</div>
+            <div class="reccard-meta">${escHtml(u.emel || '')}</div>
+          </div>
+          <span class="badge ${isAdminRole(u.role) ? 'b-aktif' : 'b-menunggu'}">${escHtml(ROLE_LABELS[u.role] || u.role)}</span>
+        </div>
+        <div class="userrow-role">
+          <select data-role-for="${u.id}">${ROLE_OPTIONS_HTML}</select>
+          <button class="btn btn-ghost btn-sm" data-saverole="${u.id}">Simpan Peranan</button>
+          ${isSelf ? '' : `<button class="btn btn-bad btn-sm" data-deleteuser="${u.id}">Padam Akaun</button>`}
+        </div>
+      `;
+      card.querySelector(`[data-role-for="${u.id}"]`).value = u.role;
+      wrap.appendChild(card);
+    });
+    wrap.querySelectorAll('[data-saverole]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.saverole;
+        const sel = wrap.querySelector(`[data-role-for="${id}"]`);
+        btn.disabled = true;
+        const { error } = await sb.from('profiles').update({ role: sel.value }).eq('id', id);
+        btn.disabled = false;
+        if(error){ toast('Gagal kemaskini peranan: ' + error.message, true); return; }
+        toast('Peranan dikemaskini.');
+        await fetchUsers();
+        renderUsers();
+      });
+    });
+    wrap.querySelectorAll('[data-deleteuser]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.deleteuser;
+        const u = users.find(x=>x.id===id);
+        if(!u) return;
+        const ok = window.confirm('Padam akaun ' + u.nama + '? Tindakan ini tidak boleh diundur.');
+        if(!ok) return;
+        btn.disabled = true;
+        try{
+          const { data: out, error: invokeErr } = await sb.functions.invoke('admin-manage-users', {
+            body: { action: 'delete', id }
+          });
+          if(invokeErr) throw new Error(invokeErr.message || 'Padam akaun gagal.');
+          if(out && out.error) throw new Error(out.error);
+          toast('Akaun ' + u.nama + ' dipadam.');
+          await fetchUsers();
+          renderUsers();
+        } catch(err){
+          console.error(err);
+          toast(err.message || 'Padam akaun gagal.', true);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  document.getElementById('createUserForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const errEl = document.getElementById('createUserError');
+    errEl.textContent = '';
+    const nama = document.getElementById('nu_nama').value.trim();
+    const emel = document.getElementById('nu_emel').value.trim();
+    const password = document.getElementById('nu_password').value;
+    const role = document.getElementById('nu_role').value;
+    const btn = document.getElementById('btnCreateUser');
+    btn.disabled = true;
+    btn.textContent = 'Mencipta...';
+    try{
+      const { data: out, error: invokeErr } = await sb.functions.invoke('admin-manage-users', {
+        body: { action: 'create', nama, emel, password, role }
+      });
+      if(invokeErr) throw new Error(invokeErr.message || 'Cipta akaun gagal.');
+      if(out && out.error) throw new Error(out.error);
+      this.reset();
+      toast('Akaun ' + nama + ' berjaya dicipta. Beritahu mereka kata laluan yang ditetapkan tadi.');
+      await fetchUsers();
+      renderUsers();
+    } catch(err){
+      console.error(err);
+      errEl.textContent = err.message || 'Cipta akaun gagal.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Cipta Akaun';
+    }
+  });
+
   // ---------- Master render ----------
   async function renderAll(){
-    renderDashboard();
     renderSemakan();
     renderTracker();
-    renderLaporan();
-    if(isAdminRole(currentRole)) renderKelulusan();
+    if(isAdminRole(currentRole)){
+      renderLaporan();
+      renderKelulusan();
+      renderUsers();
+    }
   }
   async function refreshAndRenderAll(){
     await fetchApplications();
+    await fetchUsers();
     await renderAll();
   }
 
@@ -1287,6 +1350,7 @@
     currentRole = profile ? profile.role : 'pelajar';
     renderAuthStatus();
     await fetchApplications();
+    await fetchUsers();
     await applyRoleVisibility();
   })();
 })();
