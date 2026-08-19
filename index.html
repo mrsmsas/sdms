@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Pendaftaran Telefon Pintar - MRSM SAS</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --bg:#eef1f6; --panel:#ffffff; --ink:#0b0b0b; --muted:#52514e; --faint:#898781;
+    --line:#e8e7e2; --brand:#2a78d6; --brand-dark:#184f95; --brand-light:#e8f1f8;
+    --ok:#0ca30c; --ok-bg:#e5f7e5; --ok-text:#0a6b0a;
+    --warn:#c98500; --warn-bg:#fdf1de;
+    --bad:#d03b3b; --bad-bg:#fceceb;
+    --serious:#c1512b; --serious-bg:#fdece2;
+    --grey:#52514e; --grey-bg:#eef1f5;
+    --radius:16px; --radius-sm:12px;
+    --shadow:0 1px 2px rgba(11,11,11,.05), 0 6px 18px rgba(11,11,11,.06);
+    --shell-w:480px; --tabbar-h:66px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased;
+  }
+  .app-shell{
+    max-width:var(--shell-w); margin:0 auto; min-height:100vh;
+    background:var(--bg); box-shadow:0 0 40px rgba(11,11,11,.10);
+    display:flex; flex-direction:column; position:relative;
+  }
+  .appbar{
+    position:sticky; top:0; z-index:20;
+    background:linear-gradient(135deg,var(--brand-dark),var(--brand));
+    color:#fff; padding:12px 16px; display:flex; align-items:center; justify-content:space-between;
+    gap:6px 10px; flex-wrap:wrap;
+  }
+  .appbar .titles{flex:1 1 130px; min-width:0;}
+  .appbar h1{margin:0; font-size:.92rem; font-weight:700; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .appbar p{margin:1px 0 0; font-size:.66rem; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .authchip{
+    flex:0 1 auto; min-width:0; display:flex; align-items:center; justify-content:flex-end;
+    flex-wrap:wrap; gap:6px; row-gap:4px;
+  }
+  .authchip span{white-space:nowrap;}
+  .authchip .btn{padding:7px 12px; font-size:.7rem; border-radius:20px; white-space:nowrap;}
+  .authchip .btn-primary{background:rgba(255,255,255,.2); color:#fff; border:1px solid rgba(255,255,255,.45);}
+  .authchip .btn-primary:hover{background:rgba(255,255,255,.32);}
+  .authchip .btn-ghost{background:rgba(255,255,255,.16); color:#fff;}
+  .authchip .badge{margin-right:2px;}
+  .rolebar{
+    background:var(--brand-light); color:var(--brand-dark); padding:9px 16px;
+    font-size:.72rem; line-height:1.4;
+  }
+  nav.tabbar{
+    position:sticky; bottom:0; z-index:20; margin-top:auto;
+    display:flex; gap:2px; background:var(--panel); border-top:1px solid var(--line);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom, 0px)); overflow-x:auto;
+  }
+  nav.tabbar button{
+    flex:1 0 auto; min-width:60px; border:none; background:transparent; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 4px;
+    border-radius:12px; color:var(--faint); font-size:.62rem; font-weight:700; white-space:nowrap;
+    transition:.15s;
+  }
+  nav.tabbar button .ic{font-size:1.15rem; line-height:1;}
+  nav.tabbar button.active{color:var(--brand); background:var(--brand-light);}
+  nav.tabbar button:active{background:var(--grey-bg);}
+  nav.tabbar button.hidden-role{display:none;}
+  main{flex:1; padding:14px 14px 20px;}
+  .view{display:none;}
+  .view.active{display:block;}
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px; box-shadow:var(--shadow); margin-bottom:14px;
+  }
+  .card h2{margin:0 0 4px; font-size:1rem;}
+  .card .sub{color:var(--muted); font-size:.8rem; margin:0 0 14px;}
+  .grid2{display:grid; grid-template-columns:1fr; gap:12px;}
+  .grid3{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .grid6{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  label{display:block; font-size:.8rem; font-weight:600; color:var(--muted); margin:0 0 6px;}
+  input, select, textarea{
+    width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:12px;
+    font-size:.95rem; font-family:inherit; color:var(--ink); background:#fbfcfe;
+  }
+  input:focus, select:focus, textarea:focus{outline:2px solid var(--brand); outline-offset:1px;}
+  .field{margin-bottom:14px;}
+  .hint{font-size:.72rem; color:var(--faint); margin-top:4px;}
+  .checkline{display:flex; align-items:flex-start; gap:8px; font-size:.85rem; color:var(--ink); margin-top:4px;}
+  .checkline input{width:auto; margin-top:3px;}
+  .btn{
+    border:none; padding:13px 18px; border-radius:12px; font-weight:700; font-size:.88rem;
+    cursor:pointer; transition:.15s;
+  }
+  .btn:disabled{opacity:.6; cursor:not-allowed;}
+  .btn-primary{background:var(--brand); color:#fff;}
+  .btn-primary:hover{background:var(--brand-dark);}
+  .btn-ok{background:var(--ok); color:#fff;}
+  .btn-bad{background:var(--bad); color:#fff;}
+  .btn-ghost{background:var(--grey-bg); color:var(--ink);}
+  .btn-sm{padding:8px 13px; font-size:.76rem; border-radius:10px;}
+  .stat{border:1px solid var(--line); border-radius:var(--radius-sm); padding:14px; background:#fbfcfe;}
+  .stat .n{font-size:1.4rem; font-weight:700;}
+  .stat .l{font-size:.68rem; color:var(--muted); font-weight:600; margin-top:2px;}
+  .stat.s-ok .n{color:var(--ok-text);}
+  .stat.s-warn .n{color:var(--warn);}
+  .stat.s-bad .n{color:var(--bad);}
+  .stat.s-serious .n{color:var(--serious);}
+  table{width:100%; border-collapse:collapse; font-size:.78rem;}
+  th{
+    text-align:left; padding:9px 6px; border-bottom:2px solid var(--line);
+    color:var(--muted); font-size:.66rem; text-transform:uppercase; letter-spacing:.03em;
+  }
+  td{padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:.7rem; font-weight:700; white-space:nowrap;}
+  .b-aktif{background:var(--ok-bg); color:var(--ok-text);}
+  .b-akan{background:var(--warn-bg); color:var(--warn);}
+  .b-tamat{background:var(--bad-bg); color:var(--bad);}
+  .b-menunggu{background:var(--grey-bg); color:var(--grey);}
+  .b-ditolak{background:var(--serious-bg); color:var(--serious);}
+  .toolbar{display:flex; flex-direction:column; gap:10px; margin-bottom:14px;}
+  .toolbar input, .toolbar select{width:100%; min-width:0;}
+  .empty{text-align:center; color:var(--muted); padding:30px 10px; font-size:.86rem;}
+  /* Record cards (mobile list rows) */
+  .reclist{display:flex; flex-direction:column; gap:10px;}
+  .reccard{border:1px solid var(--line); border-radius:var(--radius-sm); padding:13px 14px; background:#fbfcfe;}
+  .reccard-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .reccard-name{font-weight:700; font-size:.92rem;}
+  .reccard-meta{font-size:.78rem; color:var(--muted); margin-top:4px; line-height:1.5;}
+  .reccard-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  .toast{
+    position:fixed; left:50%; bottom:calc(var(--tabbar-h) + 14px); transform:translateX(-50%) translateY(10px);
+    background:var(--brand-dark); color:#fff;
+    padding:12px 18px; border-radius:12px; font-size:.85rem; box-shadow:var(--shadow);
+    opacity:0; transition:.25s; pointer-events:none; z-index:150;
+    max-width:calc(var(--shell-w) - 32px); width:calc(100% - 32px); text-align:center;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .toast.err{background:var(--bad);}
+  .note{background:#fff8e6; border:1px solid #f0e0a8; color:#7a5b00; border-radius:10px; padding:10px 12px; font-size:.8rem; margin-top:10px;}
+  footer{text-align:center; color:var(--muted); font-size:.7rem; padding:14px 20px;}
+  /* Bar chart */
+  .barchart-row{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .barchart-label{width:96px; font-size:.72rem; color:var(--muted); text-align:right; flex-shrink:0;}
+  .barchart-track{flex:1; background:#eef1f5; border-radius:4px; height:14px; position:relative;}
+  .barchart-fill{height:14px; border-radius:0 4px 4px 0; min-width:2px;}
+  .barchart-value{width:26px; font-size:.72rem; font-weight:700; color:var(--ink); flex-shrink:0;}
+  .chart-wrap{margin-top:6px;}
+  /* Modal */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(11,11,11,.45); display:none;
+    align-items:center; justify-content:center; z-index:100; padding:16px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    background:#fff; border-radius:20px; max-width:420px; width:100%;
+    max-height:88vh; overflow-y:auto; padding:20px; box-shadow:0 10px 40px rgba(0,0,0,.25);
+  }
+  .modal h3{margin:0 0 14px;}
+  .permline{font-size:.75rem; color:var(--faint); margin-top:8px;}
+  a{color:var(--brand);}
+  @media print{
+    nav, .rolebar, header, footer, .no-print{display:none !important;}
+    .view{display:none !important;}
+    .view.print-active{display:block !important;}
+    .app-shell{box-shadow:none; max-width:100%;}
+    body{background:#fff;}
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+<header class="appbar">
+  <div class="titles">
+    <h1>📱 Telefon Pintar MRSM SAS</h1>
+    <p>Pendaftaran &amp; Kelulusan</p>
+  </div>
+  <div class="authchip no-print" id="authStatus"></div>
+</header>
+
+<div class="rolebar no-print" id="roleHint"></div>
+
+<main>
+
+  <!-- ================= BORANG PENDAFTARAN ================= -->
+  <section class="view active" id="view-borang">
+    <div class="card">
+      <h2>Borang Pendaftaran Telefon Pintar</h2>
+      <p class="sub">Sila lengkapkan maklumat di bawah dengan tepat. Tiada log masuk diperlukan. Permohonan akan berstatus "Menunggu Kelulusan" sehingga disemak oleh Admin.</p>
+
+      <form id="regForm">
+        <div class="grid2">
+          <div class="field">
+            <label>Nama Pelajar *</label>
+            <input type="text" id="f_nama" required placeholder="Contoh: Ahmad Faiz bin Ismail">
+          </div>
+          <div class="field">
+            <label>No. Maktab (No. Pelajar) *</label>
+            <input type="text" id="f_maktab" required placeholder="Contoh: MRS230145">
+          </div>
+          <div class="field">
+            <label>No. Kad Pengenalan *</label>
+            <input type="text" id="f_ic" required placeholder="Contoh: 080101-10-1234">
+          </div>
+          <div class="field">
+            <label>Emel Pelajar *</label>
+            <input type="email" id="f_emel" required placeholder="Contoh: ahmadfaiz@gmail.com">
+            <div class="hint">Notis kelulusan/penolakan, peraturan penggunaan &amp; tarikh tamat akan dihantar ke emel ini.</div>
+          </div>
+          <div class="field">
+            <label>Homeroom *</label>
+            <input type="text" id="f_homeroom" required placeholder="Contoh: Homeroom 3 - En. Rahim">
+          </div>
+          <div class="field">
+            <label>Kelas / Tingkatan *</label>
+            <input type="text" id="f_kelas" required placeholder="Contoh: Tingkatan 4 Amanah">
+          </div>
+          <div class="field">
+            <label>Jenama Telefon *</label>
+            <input type="text" id="f_jenama" required placeholder="Contoh: Samsung">
+          </div>
+          <div class="field">
+            <label>Model Telefon *</label>
+            <input type="text" id="f_model" required placeholder="Contoh: Galaxy A15">
+          </div>
+          <div class="field">
+            <label>Warna Telefon *</label>
+            <input type="text" id="f_warna" required placeholder="Contoh: Hitam">
+          </div>
+          <div class="field">
+            <label>No. IMEI <span style="font-weight:400; color:var(--faint);">(Pilihan)</span></label>
+            <input type="text" id="f_imei" placeholder="Contoh: 356938035643809">
+          </div>
+          <div class="field">
+            <label>Nombor Telefon *</label>
+            <input type="text" id="f_notelefon" required placeholder="Contoh: 012-3456789">
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label>Tempoh Kebenaran Dimohon &mdash; Tarikh Mula *</label>
+            <input type="date" id="f_tarikhmula" required>
+          </div>
+          <div class="field">
+            <label>Tempoh Kebenaran Dimohon &mdash; Tarikh Akhir *</label>
+            <input type="date" id="f_tarikhakhir" required>
+            <div class="hint" id="tempohHint"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Muat Naik Surat Kebenaran <span style="font-weight:400; color:var(--faint);">(PDF / Imej, jika ada)</span></label>
+          <input type="file" id="f_surat" accept=".pdf,.jpg,.jpeg,.png">
+          <div class="hint">Surat kebenaran daripada ibu bapa/penjaga atau pihak sekolah (jika berkaitan). Fail dimuat naik terus ke storan selamat (Supabase Storage) dan hanya boleh dilihat oleh Admin/Warden/Homeroom.</div>
+        </div>
+
+        <div class="checkline">
+          <input type="checkbox" id="f_akur" required>
+          <label style="margin:0; font-weight:400; color:var(--ink);" for="f_akur">Saya mengaku maklumat di atas adalah benar dan akur dengan Peraturan Penggunaan Telefon Pintar MRSM Sultan Azlan Shah.</label>
+        </div>
+
+        <div style="margin-top:16px; display:flex; gap:10px;">
+          <button type="submit" class="btn btn-primary" id="btnSubmitReg">Hantar Permohonan</button>
+          <button type="reset" class="btn btn-ghost">Kosongkan Borang</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ================= SEMAK STATUS (PUBLIC) ================= -->
+  <section class="view" id="view-semakstatus">
+    <div class="card">
+      <h2>Semak Status Permohonan</h2>
+      <p class="sub">Masukkan No. Maktab dan No. Kad Pengenalan yang sama seperti diisi semasa mendaftar untuk semak status permohonan anda. Tiada log masuk diperlukan.</p>
+      <form id="statusForm">
+        <div class="grid2">
+          <div class="field">
+            <label>No. Maktab (No. Pelajar) *</label>
+            <input type="text" id="s_maktab" required placeholder="Contoh: MRS230145">
+          </div>
+          <div class="field">
+            <label>No. Kad Pengenalan *</label>
+            <input type="text" id="s_ic" required placeholder="Contoh: 080101-10-1234">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btnCheckStatus">Semak Status</button>
+      </form>
+      <div id="statusResults" style="margin-top:18px;"></div>
+    </div>
+  </section>
+
+  <!-- ================= DASHBOARD ================= -->
+  <section class="view" id="view-dashboard">
+    <div class="card">
+      <h2>Dashboard</h2>
+      <p class="sub" id="dashScope">Gambaran keseluruhan status pendaftaran telefon pintar.</p>
+      <div class="grid6" id="dashStats"></div>
+    </div>
+
+    <div class="card">
+      <h2>Mengikut Status</h2>
+      <div class="chart-wrap" id="chartStatus"></div>
+    </div>
+
+    <div class="card">
+      <h2>Mengikut Kelas</h2>
+      <div class="chart-wrap" id="chartKelas"></div>
+    </div>
+  </section>
+
+  <!-- ================= SEMAKAN ================= -->
+  <section class="view" id="view-semakan">
+    <div class="card">
+      <h2>Semakan Rekod Pendaftaran</h2>
+      <p class="sub" id="semakanScope">Senarai penuh rekod pendaftaran telefon pintar.</p>
+      <div class="toolbar">
+        <input type="text" id="semSearch" placeholder="Cari nama / no. maktab / kelas...">
+        <select id="semFilter">
+          <option value="">Semua Status</option>
+          <option value="Aktif">Aktif</option>
+          <option value="Akan Tamat">Akan Tamat</option>
+          <option value="Tamat Tempoh">Tamat Tempoh</option>
+          <option value="Menunggu Kelulusan">Menunggu Kelulusan</option>
+          <option value="Ditolak">Ditolak</option>
+        </select>
+      </div>
+      <div class="reclist" id="semakanBody"></div>
+      <div class="empty" id="semakanEmpty" style="display:none;">Tiada rekod padan.</div>
+    </div>
+  </section>
+
+  <!-- ================= E-TRACKER ================= -->
+  <section class="view" id="view-tracker">
+    <div class="card">
+      <h2>E-Tracker &mdash; Status Pendaftaran</h2>
+      <p class="sub">Status ditukar secara automatik berdasarkan perbandingan tarikh semasa dengan tarikh tamat tempoh kelulusan.</p>
+
+      <div class="grid3" id="statCards"></div>
+
+      <div class="toolbar" style="margin-top:16px;">
+        <input type="text" id="trkSearch" placeholder="Cari nama / kelas / model...">
+        <select id="trkFilter">
+          <option value="">Semua Status</option>
+          <option value="Aktif">Aktif</option>
+          <option value="Akan Tamat">Akan Tamat</option>
+          <option value="Tamat Tempoh">Tamat Tempoh</option>
+          <option value="Menunggu Kelulusan">Menunggu Kelulusan</option>
+          <option value="Ditolak">Ditolak</option>
+        </select>
+        <span style="margin-left:auto; font-size:.8rem; color:var(--muted);">Uji Tarikh (paparan sahaja):</span>
+        <input type="date" id="simDate">
+        <button class="btn btn-ghost btn-sm" id="resetSim">Guna Tarikh Sebenar</button>
+      </div>
+
+      <div class="reclist" id="trackerBody"></div>
+      <div class="empty" id="trackerEmpty" style="display:none;">Tiada rekod padan.</div>
+    </div>
+  </section>
+
+  <!-- ================= LAPORAN ================= -->
+  <section class="view" id="view-laporan">
+    <div class="card">
+      <h2>Laporan</h2>
+      <p class="sub">Ringkasan statistik untuk tujuan pelaporan kepada pentadbiran maktab.</p>
+      <div class="grid6" id="laporanStats"></div>
+      <div style="margin-top:16px; display:flex; gap:10px;" class="no-print">
+        <button class="btn btn-primary" id="btnCSV">Muat Turun CSV</button>
+        <button class="btn btn-ghost" id="btnPrint">Cetak Laporan</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Pecahan mengikut Kelas</h2>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Kelas</th><th>Aktif</th><th>Akan Tamat</th><th>Tamat Tempoh</th><th>Menunggu</th><th>Ditolak</th><th>Jumlah</th></tr></thead>
+          <tbody id="laporanKelasBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Pecahan mengikut Homeroom</h2>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Homeroom</th><th>Aktif</th><th>Akan Tamat</th><th>Tamat Tempoh</th><th>Menunggu</th><th>Ditolak</th><th>Jumlah</th></tr></thead>
+          <tbody id="laporanHomeroomBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= KELULUSAN (ADMIN) ================= -->
+  <section class="view" id="view-kelulusan">
+    <div class="card">
+      <h2>Kelulusan Permohonan</h2>
+      <p class="sub">Semak, luluskan atau tolak permohonan pendaftaran telefon pintar pelajar.</p>
+      <div class="grid6" id="adminStatCards"></div>
+    </div>
+
+    <div class="card">
+      <h2>Menunggu Kelulusan</h2>
+      <div class="reclist" id="pendingList"></div>
+      <div class="empty" id="pendingEmpty" style="display:none;">Tiada permohonan menunggu kelulusan.</div>
+    </div>
+  </section>
+
+</main>
+
+<footer>MRSM Sultan Azlan Shah (SAS) &mdash; Disokong oleh Supabase.</footer>
+
+<nav class="tabbar no-print">
+  <button data-view="borang" data-roles="pelajar,warden,homeroom,ketua_warden,timbalan_pengetua" class="active"><span class="ic">📝</span>Borang</button>
+  <button data-view="semakstatus" data-roles="pelajar,warden,homeroom,ketua_warden,timbalan_pengetua"><span class="ic">🔍</span>Semak</button>
+  <button data-view="dashboard" data-roles="warden,homeroom,ketua_warden,timbalan_pengetua"><span class="ic">📊</span>Dashboard</button>
+  <button data-view="semakan" data-roles="warden,homeroom,ketua_warden,timbalan_pengetua"><span class="ic">📋</span>Semakan</button>
+  <button data-view="tracker" data-roles="warden,homeroom,ketua_warden,timbalan_pengetua"><span class="ic">⏱️</span>Tracker</button>
+  <button data-view="laporan" data-roles="warden,homeroom,ketua_warden,timbalan_pengetua"><span class="ic">📈</span>Laporan</button>
+  <button data-view="kelulusan" data-roles="ketua_warden,timbalan_pengetua"><span class="ic">✅</span>Lulus</button>
+</nav>
+
+</div><!-- /app-shell -->
+
+<div class="toast" id="toast"></div>
+
+<!-- Login modal -->
+<div class="modal-overlay no-print" id="loginOverlay">
+  <div class="modal">
+    <h3>Log Masuk Staf</h3>
+    <p class="hint" style="margin-bottom:14px;">Untuk Warden, Homeroom, Ketua Warden &amp; Timbalan Pengetua. Pelajar tidak perlu log masuk untuk menghantar Borang Pendaftaran.</p>
+    <form id="loginForm">
+      <div class="field" id="li_namaWrap" style="display:none;">
+        <label>Nama Penuh (untuk pendaftaran akaun baharu)</label>
+        <input type="text" id="li_nama">
+      </div>
+      <div class="field"><label>Emel</label><input type="email" id="li_email" required></div>
+      <div class="field"><label>Kata Laluan</label><input type="password" id="li_password" required minlength="6"></div>
+      <div class="hint" id="loginError" style="color:var(--bad);"></div>
+      <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+        <button type="submit" class="btn btn-primary" id="btnDoLogin">Log Masuk</button>
+        <button type="button" class="btn btn-ghost" id="btnSignup">Daftar Akaun Baharu</button>
+        <button type="button" class="btn btn-ghost" id="loginCancel">Batal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit modal -->
+<div class="modal-overlay no-print" id="editOverlay">
+  <div class="modal">
+    <h3>Edit Rekod Pendaftaran</h3>
+    <form id="editForm">
+      <input type="hidden" id="e_id">
+      <div class="grid2">
+        <div class="field"><label>Nama Pelajar</label><input type="text" id="e_nama" required></div>
+        <div class="field"><label>No. Maktab</label><input type="text" id="e_maktab" required></div>
+        <div class="field"><label>No. Kad Pengenalan</label><input type="text" id="e_ic" required></div>
+        <div class="field"><label>Emel Pelajar</label><input type="email" id="e_emel" required></div>
+        <div class="field"><label>Homeroom</label><input type="text" id="e_homeroom" required></div>
+        <div class="field"><label>Kelas / Tingkatan</label><input type="text" id="e_kelas" required></div>
+        <div class="field"><label>Jenama Telefon</label><input type="text" id="e_jenama" required></div>
+        <div class="field"><label>Model Telefon</label><input type="text" id="e_model" required></div>
+        <div class="field"><label>Warna Telefon</label><input type="text" id="e_warna" required></div>
+        <div class="field"><label>No. IMEI (Pilihan)</label><input type="text" id="e_imei"></div>
+        <div class="field"><label>Nombor Telefon</label><input type="text" id="e_notelefon" required></div>
+      </div>
+      <div class="field" id="e_suratWrap">
+        <label>Surat Kebenaran</label>
+        <div id="e_suratCurrent" class="hint" style="margin-bottom:6px;"></div>
+        <input type="file" id="e_surat" accept=".pdf,.jpg,.jpeg,.png">
+      </div>
+      <div class="grid2" id="e_tarikhWrap">
+        <div class="field">
+          <label>Tarikh Mula (jika Aktif)</label>
+          <input type="date" id="e_tarikhmula">
+        </div>
+        <div class="field">
+          <label>Tarikh Akhir (jika Aktif)</label>
+          <input type="date" id="e_tarikhtamat">
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button type="submit" class="btn btn-primary" id="btnSaveEdit">Simpan</button>
+        <button type="button" class="btn btn-ghost" id="editCancel">Batal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Supabase client ----------
+  const SUPABASE_URL = 'https://rvhtnwbpdpflsqqarjvd.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2aHRud2JwZHBmbHNxcWFyanZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzYyMDMsImV4cCI6MjEwMjcxMjIwM30.FmykMngBHGTkEU1WP14IlEx5kxfJgdqXglFKRaZIjIs';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ---------- Utilities ----------
+  function fmtDate(d){
+    if(!d) return '-';
+    const dt = new Date(d);
+    return dt.toLocaleDateString('ms-MY', { day:'2-digit', month:'short', year:'numeric' });
+  }
+  function iso(d){ return new Date(d).toISOString().slice(0,10); }
+  function todayStr(){
+    const d = simDate ? new Date(simDate) : new Date();
+    return d.toISOString().slice(0,10);
+  }
+  function daysBetween(a,b){
+    const A = new Date(a); A.setHours(0,0,0,0);
+    const B = new Date(b); B.setHours(0,0,0,0);
+    return Math.round((B - A) / 86400000);
+  }
+  function toast(msg, isErr){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.toggle('err', !!isErr);
+    t.classList.add('show');
+    clearTimeout(toast._h);
+    toast._h = setTimeout(()=> t.classList.remove('show'), 3200);
+  }
+  function escHtml(s){
+    return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function newId(){
+    if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+  }
+
+  let simDate = null;      // yyyy-mm-dd override for tracker display only (never sent to DB)
+  let session = null;      // Supabase auth session
+  let profile = null;      // row from public.profiles for the current user (nama, role, homeroom)
+  let currentRole = 'pelajar';
+  let applications = [];   // rows fetched from Supabase, mapped to camelCase
+
+  const ROLE_LABELS = {
+    pelajar:'Pelajar', warden:'Warden', homeroom:'Homeroom',
+    ketua_warden:'Ketua Warden', timbalan_pengetua:'Timbalan Pengetua'
+  };
+  const roleHints = {
+    pelajar: 'Akses: hantar Borang Pendaftaran &amp; Semak Status (tanpa log masuk).',
+    warden: 'Akses (User): Dashboard, Semakan (lihat), E-Tracker, Laporan.',
+    homeroom: 'Akses (User): Dashboard, Semakan (lihat), E-Tracker, Laporan &mdash; terhad kepada homeroom sendiri.',
+    ketua_warden: 'Akses (Admin): semua modul termasuk Edit, Padam &amp; Kelulusan.',
+    timbalan_pengetua: 'Akses (Admin): semua modul termasuk Edit, Padam &amp; Kelulusan.'
+  };
+  const defaultViewByRole = {
+    pelajar: 'borang', warden: 'dashboard', homeroom: 'dashboard',
+    ketua_warden: 'dashboard', timbalan_pengetua: 'dashboard'
+  };
+  function isAdminRole(role){ return role === 'ketua_warden' || role === 'timbalan_pengetua'; }
+
+  // ---------- Row mapping (DB snake_case <-> app camelCase) ----------
+  function mapRow(r){
+    return {
+      id: r.id, nama: r.nama, maktab: r.maktab, ic: r.ic, emel: r.emel, homeroom: r.homeroom, kelas: r.kelas,
+      jenama: r.jenama, model: r.model, warna: r.warna, imei: r.imei, notelefon: r.notelefon,
+      tarikhMohon: r.tarikh_mohon, tarikhMulaDiminta: r.tarikh_mula_diminta, tarikhAkhirDiminta: r.tarikh_akhir_diminta,
+      status: r.status, tarikhMula: r.tarikh_mula, tarikhTamat: r.tarikh_tamat,
+      suratNama: r.surat_nama, suratPath: r.surat_path
+    };
+  }
+
+  // ---------- Status computation (client-side, honours "Uji Tarikh") ----------
+  function computeStatus(app){
+    if(app.status === 'Menunggu Kelulusan' || app.status === 'Ditolak') return app.status;
+    const now = todayStr();
+    const daysLeft = daysBetween(now, app.tarikhTamat);
+    if(daysLeft < 0) return 'Tamat Tempoh';
+    if(daysLeft <= 7) return 'Akan Tamat';
+    return 'Aktif';
+  }
+  function badgeClass(status){
+    return {
+      'Aktif':'b-aktif','Akan Tamat':'b-akan','Tamat Tempoh':'b-tamat',
+      'Menunggu Kelulusan':'b-menunggu','Ditolak':'b-ditolak'
+    }[status] || 'b-menunggu';
+  }
+
+  // ---------- Data loading ----------
+  async function fetchApplications(){
+    if(!(currentRole && currentRole !== 'pelajar')){ applications = []; return; }
+    const { data, error } = await sb.from('applications').select('*').order('created_at', { ascending:false });
+    if(error){
+      console.error(error);
+      toast('Gagal muatkan data: ' + error.message, true);
+      applications = [];
+      return;
+    }
+    applications = (data || []).map(mapRow);
+  }
+
+  async function viewSurat(path){
+    if(!path) return;
+    const { data, error } = await sb.storage.from('surat-kebenaran').createSignedUrl(path, 300);
+    if(error || !data){
+      toast('Gagal buka surat kebenaran.', true);
+      return;
+    }
+    window.open(data.signedUrl, '_blank', 'noopener');
+  }
+  window.__viewSurat = viewSurat;
+
+  // ---------- Auth ----------
+  async function refreshProfile(){
+    if(!session){ profile = null; return; }
+    const { data, error } = await sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+    if(error){ console.error(error); profile = null; return; }
+    profile = data || null;
+  }
+
+  function renderAuthStatus(){
+    const el = document.getElementById('authStatus');
+    if(!session){
+      el.innerHTML = `<button class="btn btn-primary btn-sm" id="btnOpenLogin">Log Masuk Staf</button>`;
+      document.getElementById('btnOpenLogin').addEventListener('click', openLogin);
+      return;
+    }
+    if(!profile){
+      el.innerHTML = `
+        <span style="font-weight:700;">${escHtml(session.user.email)}</span>
+        <span class="badge b-ditolak">Menunggu Peranan</span>
+        <button class="btn btn-ghost btn-sm" id="btnLogout">Log Keluar</button>
+      `;
+    } else {
+      el.innerHTML = `
+        <span style="font-weight:700;">${escHtml(profile.nama)}</span>
+        <span class="badge b-aktif">${escHtml(ROLE_LABELS[profile.role] || profile.role)}</span>
+        <button class="btn btn-ghost btn-sm" id="btnLogout">Log Keluar</button>
+      `;
+    }
+    document.getElementById('btnLogout').addEventListener('click', async ()=>{
+      await sb.auth.signOut();
+      toast('Berjaya log keluar.');
+    });
+  }
+
+  function openLogin(){
+    document.getElementById('loginError').textContent = '';
+    document.getElementById('li_namaWrap').style.display = 'none';
+    document.getElementById('loginForm').reset();
+    document.getElementById('loginOverlay').classList.add('show');
+  }
+  document.getElementById('loginCancel').addEventListener('click', ()=> document.getElementById('loginOverlay').classList.remove('show'));
+  document.getElementById('btnSignup').addEventListener('click', async ()=>{
+    const namaWrap = document.getElementById('li_namaWrap');
+    if(namaWrap.style.display === 'none'){
+      namaWrap.style.display = 'block';
+      document.getElementById('loginError').textContent = 'Isi nama penuh, emel &amp; kata laluan, kemudian klik "Daftar Akaun Baharu" sekali lagi.';
+      return;
+    }
+    const nama = document.getElementById('li_nama').value.trim();
+    const email = document.getElementById('li_email').value.trim();
+    const password = document.getElementById('li_password').value;
+    if(!nama || !email || !password){
+      document.getElementById('loginError').textContent = 'Sila lengkapkan nama, emel dan kata laluan.';
+      return;
+    }
+    const { error } = await sb.auth.signUp({ email, password, options: { data: { nama } } });
+    if(error){
+      document.getElementById('loginError').textContent = error.message;
+      return;
+    }
+    document.getElementById('loginOverlay').classList.remove('show');
+    toast('Akaun dicipta. Sila hubungi Ketua Warden/Timbalan Pengetua untuk aktifkan peranan anda.');
+  });
+  document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const email = document.getElementById('li_email').value.trim();
+    const password = document.getElementById('li_password').value;
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error){
+      document.getElementById('loginError').textContent = error.message;
+      return;
+    }
+    document.getElementById('loginOverlay').classList.remove('show');
+    toast('Berjaya log masuk.');
+  });
+
+  sb.auth.onAuthStateChange(async (_event, sess)=>{
+    session = sess;
+    await refreshProfile();
+    currentRole = profile ? profile.role : 'pelajar';
+    renderAuthStatus();
+    await fetchApplications();
+    await applyRoleVisibility();
+  });
+
+  // ---------- Role-driven view visibility ----------
+  async function applyRoleVisibility(){
+    const gated = session && !profile; // logged in, but no role assigned yet
+    document.querySelectorAll('nav button').forEach(btn=>{
+      const roles = btn.dataset.roles.split(',');
+      const isPublicTab = btn.dataset.view === 'borang' || btn.dataset.view === 'semakstatus';
+      const allowed = isPublicTab ? true : (!gated && roles.includes(currentRole));
+      btn.classList.toggle('hidden-role', !allowed);
+    });
+    document.getElementById('roleHint').innerHTML = gated
+      ? 'Akaun anda belum ditetapkan peranan. Sila hubungi Ketua Warden/Timbalan Pengetua.'
+      : (roleHints[currentRole] || '');
+
+    const activeBtn = document.querySelector('nav button.active');
+    const activeAllowed = activeBtn && !gated && activeBtn.dataset.roles.split(',').includes(currentRole);
+    if(!activeAllowed){
+      switchView(gated ? 'borang' : (defaultViewByRole[currentRole] || 'borang'));
+    }
+    await renderAll();
+  }
+
+  function switchView(viewName){
+    document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active','print-active'));
+    const btn = document.querySelector(`nav button[data-view="${viewName}"]`);
+    if(btn) btn.classList.add('active');
+    const view = document.getElementById('view-'+viewName);
+    if(view) view.classList.add('active','print-active');
+    renderAll();
+  }
+  document.querySelectorAll('nav button').forEach(btn=>{
+    btn.addEventListener('click', ()=> switchView(btn.dataset.view));
+  });
+
+  // ---------- Borang (public submission, no login required) ----------
+  const f_mula = document.getElementById('f_tarikhmula');
+  const f_akhir = document.getElementById('f_tarikhakhir');
+  function validateTempohRange(){
+    const hint = document.getElementById('tempohHint');
+    if(f_mula.value && f_akhir.value && f_akhir.value < f_mula.value){
+      hint.textContent = 'Tarikh akhir mesti selepas tarikh mula.';
+      hint.style.color = 'var(--bad)';
+      f_akhir.setCustomValidity('Tarikh akhir mesti selepas tarikh mula.');
+    } else {
+      hint.textContent = '';
+      f_akhir.setCustomValidity('');
+    }
+  }
+  f_mula.addEventListener('change', validateTempohRange);
+  f_akhir.addEventListener('change', validateTempohRange);
+
+  document.getElementById('regForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    validateTempohRange();
+    if(!this.reportValidity()) return;
+
+    const btn = document.getElementById('btnSubmitReg');
+    btn.disabled = true;
+    btn.textContent = 'Menghantar...';
+    try{
+      const id = newId();
+      const suratFile = document.getElementById('f_surat').files[0];
+      let suratPath = null, suratNama = null;
+
+      if(suratFile){
+        const path = id + '/' + suratFile.name;
+        const { error: upErr } = await sb.storage.from('surat-kebenaran').upload(path, suratFile);
+        if(upErr){ throw new Error('Muat naik surat gagal: ' + upErr.message); }
+        suratPath = path;
+        suratNama = suratFile.name;
+      }
+
+      const payload = {
+        id,
+        pelajar_id: session ? session.user.id : null,
+        nama: document.getElementById('f_nama').value.trim(),
+        maktab: document.getElementById('f_maktab').value.trim(),
+        ic: document.getElementById('f_ic').value.trim(),
+        emel: document.getElementById('f_emel').value.trim(),
+        homeroom: document.getElementById('f_homeroom').value.trim(),
+        kelas: document.getElementById('f_kelas').value.trim(),
+        jenama: document.getElementById('f_jenama').value.trim(),
+        model: document.getElementById('f_model').value.trim(),
+        warna: document.getElementById('f_warna').value.trim(),
+        imei: document.getElementById('f_imei').value.trim() || null,
+        notelefon: document.getElementById('f_notelefon').value.trim(),
+        tarikh_mula_diminta: f_mula.value,
+        tarikh_akhir_diminta: f_akhir.value,
+        surat_path: suratPath,
+        surat_nama: suratNama,
+        status: 'Menunggu Kelulusan'
+      };
+      const { error } = await sb.from('applications').insert(payload);
+      if(error) throw new Error(error.message);
+
+      this.reset();
+      document.getElementById('tempohHint').textContent = '';
+      toast('Permohonan berjaya dihantar. Status: Menunggu Kelulusan.');
+      if(currentRole !== 'pelajar') await refreshAndRenderAll();
+    } catch(err){
+      console.error(err);
+      toast(err.message || 'Permohonan gagal dihantar.', true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Hantar Permohonan';
+    }
+  });
+
+  // ---------- Semak Status (public, no login) ----------
+  const PERATURAN_RINGKAS = [
+    'Telefon hanya boleh digunakan untuk tujuan rasmi yang dinyatakan dalam permohonan — bukan untuk hiburan/media sosial.',
+    'Mesti patuh jadual & had masa penggunaan yang diluluskan.',
+    'Dilarang sambungkan telefon ke Wi-Fi maktab — guna data peribadi sahaja.',
+    'Dilarang mengambil gambar/video/audio individu lain tanpa kebenaran.',
+    'Pemilik bertanggungjawab sepenuhnya atas keselamatan peranti; maktab tidak menanggung kerosakan/kehilangan.',
+    'Pelanggaran = kebenaran ditarik balik serta-merta; peranti selepas tamat tempoh akan dirampas; tebusan RM300 untuk tuntut semula.'
+  ];
+  function statusBadgeHtml(status){
+    return `<span class="badge ${badgeClass(status)}">${escHtml(status)}</span>`;
+  }
+  function renderStatusResults(rows){
+    const el = document.getElementById('statusResults');
+    if(!rows || !rows.length){
+      el.innerHTML = '<div class="empty">Tiada rekod dijumpai. Sila semak semula No. Maktab &amp; No. Kad Pengenalan yang dimasukkan.</div>';
+      return;
+    }
+    el.innerHTML = rows.map(r=>{
+      const st = r.status_semasa;
+      let extra = '';
+      if(st === 'Aktif' || st === 'Akan Tamat'){
+        extra = `
+          <div style="margin-top:10px; font-size:.85rem;">
+            <div>Tarikh Mula: <strong>${fmtDate(r.tarikh_mula)}</strong> &middot; Tarikh Tamat: <strong>${fmtDate(r.tarikh_tamat)}</strong> ${r.baki_hari!=null ? '('+r.baki_hari+' hari lagi)' : ''}</div>
+          </div>
+          <div class="note" style="margin-top:10px;">
+            <strong>Peraturan Ringkas:</strong>
+            <ul style="margin:8px 0 0; padding-left:18px;">
+              ${PERATURAN_RINGKAS.map(p=>`<li style="margin-bottom:4px;">${escHtml(p)}</li>`).join('')}
+            </ul>
+          </div>`;
+      } else if(st === 'Tamat Tempoh'){
+        extra = `<div style="margin-top:10px; font-size:.85rem;">Kebenaran telah tamat pada <strong>${fmtDate(r.tarikh_tamat)}</strong>. Sila hantar permohonan baharu jika masih diperlukan.</div>`;
+      } else if(st === 'Ditolak'){
+        extra = `<div style="margin-top:10px; font-size:.85rem;">Permohonan tidak diluluskan. Sila berjumpa Homeroom/Warden untuk maklumat lanjut.</div>`;
+      } else {
+        extra = `<div style="margin-top:10px; font-size:.85rem;">Permohonan sedang menunggu semakan Admin.</div>`;
+      }
+      return `
+        <div class="card" style="margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; align-items:center;">
+            <div>
+              <div style="font-weight:700;">${escHtml(r.nama)} <span style="font-weight:400; color:var(--muted); font-size:.8rem;">(${escHtml(r.kelas)} &middot; ${escHtml(r.homeroom)})</span></div>
+              <div style="font-size:.8rem; color:var(--muted); margin-top:2px;">${escHtml(r.jenama)} ${escHtml(r.model)} &middot; ${escHtml(r.warna)} &middot; Dimohon: ${fmtDate(r.tarikh_mohon)}</div>
+            </div>
+            ${statusBadgeHtml(st)}
+          </div>
+          ${extra}
+        </div>`;
+    }).join('');
+  }
+  document.getElementById('statusForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const btn = document.getElementById('btnCheckStatus');
+    btn.disabled = true;
+    btn.textContent = 'Menyemak...';
+    try{
+      const maktab = document.getElementById('s_maktab').value.trim();
+      const ic = document.getElementById('s_ic').value.trim();
+      const { data, error } = await sb.rpc('check_application_status', { p_maktab: maktab, p_ic: ic });
+      if(error){ throw new Error(error.message); }
+      renderStatusResults(data);
+    } catch(err){
+      console.error(err);
+      toast(err.message || 'Semakan gagal.', true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Semak Status';
+    }
+  });
+
+  // ---------- Stat helpers ----------
+  function countByStatus(list){
+    const counts = { 'Aktif':0,'Akan Tamat':0,'Tamat Tempoh':0,'Menunggu Kelulusan':0,'Ditolak':0 };
+    list.forEach(a => { const s = computeStatus(a); counts[s] = (counts[s]||0) + 1; });
+    return counts;
+  }
+  function renderStatCards(targetId, list, withTotal){
+    const c = countByStatus(list);
+    const total = list.length;
+    let html = '';
+    if(withTotal) html += `<div class="stat"><div class="n">${total}</div><div class="l">JUMLAH KESELURUHAN</div></div>`;
+    html += `
+      <div class="stat s-ok"><div class="n">${c['Aktif']}</div><div class="l">AKTIF</div></div>
+      <div class="stat s-warn"><div class="n">${c['Akan Tamat']}</div><div class="l">AKAN TAMAT</div></div>
+      <div class="stat s-bad"><div class="n">${c['Tamat Tempoh']}</div><div class="l">TAMAT TEMPOH</div></div>
+      <div class="stat"><div class="n">${c['Menunggu Kelulusan']}</div><div class="l">MENUNGGU KELULUSAN</div></div>
+      <div class="stat s-serious"><div class="n">${c['Ditolak']}</div><div class="l">DITOLAK</div></div>
+    `;
+    document.getElementById(targetId).innerHTML = html;
+  }
+
+  // ---------- Bar chart ----------
+  const STATUS_COLORS = {
+    'Aktif':'#0ca30c','Akan Tamat':'#c98500','Tamat Tempoh':'#d03b3b',
+    'Menunggu Kelulusan':'#898781','Ditolak':'#c1512b'
+  };
+  function renderBarChart(targetId, rows, colorFn){
+    const max = Math.max(1, ...rows.map(r=>r.value));
+    const el = document.getElementById(targetId);
+    if(!rows.length){ el.innerHTML = '<div class="empty">Tiada data.</div>'; return; }
+    el.innerHTML = rows.map(r => `
+      <div class="barchart-row">
+        <div class="barchart-label">${escHtml(r.label)}</div>
+        <div class="barchart-track"><div class="barchart-fill" style="width:${Math.max(2,(r.value/max*100))}%; background:${colorFn(r)};"></div></div>
+        <div class="barchart-value">${r.value}</div>
+      </div>
+    `).join('');
+  }
+
+  // ---------- Dashboard ----------
+  function renderDashboard(){
+    const list = applications;
+    document.getElementById('dashScope').textContent = (currentRole === 'homeroom' && profile && profile.homeroom)
+      ? 'Skop: ' + profile.homeroom
+      : 'Gambaran keseluruhan status pendaftaran telefon pintar.';
+    renderStatCards('dashStats', list, true);
+
+    const statusRows = Object.keys(STATUS_COLORS).map(s => ({label:s, value: countByStatus(list)[s] || 0}));
+    renderBarChart('chartStatus', statusRows, r => STATUS_COLORS[r.label]);
+
+    const byKelas = {};
+    list.forEach(a => { byKelas[a.kelas] = (byKelas[a.kelas]||0) + 1; });
+    const kelasRows = Object.keys(byKelas).sort().map(k => ({label:k, value:byKelas[k]}));
+    renderBarChart('chartKelas', kelasRows, () => '#2a78d6');
+  }
+
+  // ---------- Semakan ----------
+  function renderSemakan(){
+    const list = applications;
+    document.getElementById('semakanScope').textContent = (currentRole === 'homeroom' && profile && profile.homeroom)
+      ? 'Skop: ' + profile.homeroom
+      : 'Senarai penuh rekod pendaftaran telefon pintar.';
+    const search = document.getElementById('semSearch').value.toLowerCase();
+    const filter = document.getElementById('semFilter').value;
+    const body = document.getElementById('semakanBody');
+    body.innerHTML = '';
+    const rows = list.filter(a=>{
+      const st = computeStatus(a);
+      const matchesFilter = !filter || st === filter;
+      const hay = (a.nama+' '+a.maktab+' '+a.kelas).toLowerCase();
+      return matchesFilter && hay.includes(search);
+    });
+    document.getElementById('semakanEmpty').style.display = rows.length ? 'none' : 'block';
+    const admin = isAdminRole(currentRole);
+    rows.forEach(a=>{
+      const st = computeStatus(a);
+      const card = document.createElement('div');
+      card.className = 'reccard';
+      const suratBtn = a.suratPath
+        ? `<button class="btn btn-ghost btn-sm" data-viewsurat="${escHtml(a.suratPath)}">Lihat Surat</button>`
+        : '';
+      const actions = admin
+        ? `<button class="btn btn-ghost btn-sm" data-edit="${a.id}">Edit</button><button class="btn btn-bad btn-sm" data-remove="${a.id}">Padam</button>`
+        : '';
+      card.innerHTML = `
+        <div class="reccard-top">
+          <div>
+            <div class="reccard-name">${escHtml(a.nama)}</div>
+            <div class="reccard-meta">${escHtml(a.maktab)} &middot; ${escHtml(a.homeroom)} &middot; ${escHtml(a.kelas)}</div>
+          </div>
+          <span class="badge ${badgeClass(st)}">${st}</span>
+        </div>
+        <div class="reccard-meta">${escHtml(a.jenama)} ${escHtml(a.model)} &middot; ${escHtml(a.warna)}</div>
+        <div class="reccard-meta">${escHtml(a.emel)} &middot; ${escHtml(a.notelefon)}</div>
+        ${(suratBtn || actions) ? `<div class="reccard-actions no-print">${suratBtn}${actions}</div>` : ''}
+      `;
+      body.appendChild(card);
+    });
+    body.querySelectorAll('[data-viewsurat]').forEach(b=> b.addEventListener('click', ()=> viewSurat(b.dataset.viewsurat)));
+    if(admin){
+      body.querySelectorAll('[data-edit]').forEach(b=> b.addEventListener('click', ()=> openEdit(b.dataset.edit)));
+      body.querySelectorAll('[data-remove]').forEach(b=> b.addEventListener('click', ()=> removeRecord(b.dataset.remove)));
+    }
+  }
+  document.getElementById('semSearch').addEventListener('input', renderSemakan);
+  document.getElementById('semFilter').addEventListener('change', renderSemakan);
+
+  // ---------- Edit / Remove (Admin) ----------
+  function openEdit(id){
+    const app = applications.find(a=>a.id===id);
+    if(!app) return;
+    document.getElementById('e_id').value = app.id;
+    document.getElementById('e_nama').value = app.nama;
+    document.getElementById('e_maktab').value = app.maktab;
+    document.getElementById('e_ic').value = app.ic;
+    document.getElementById('e_emel').value = app.emel || '';
+    document.getElementById('e_homeroom').value = app.homeroom;
+    document.getElementById('e_kelas').value = app.kelas;
+    document.getElementById('e_jenama').value = app.jenama;
+    document.getElementById('e_model').value = app.model;
+    document.getElementById('e_warna').value = app.warna;
+    document.getElementById('e_imei').value = app.imei || '';
+    document.getElementById('e_notelefon').value = app.notelefon;
+    document.getElementById('e_suratCurrent').textContent = app.suratNama ? ('Fail semasa: ' + app.suratNama) : 'Tiada surat dimuat naik.';
+    document.getElementById('e_surat').value = '';
+    const tarikhWrap = document.getElementById('e_tarikhWrap');
+    if(app.status === 'Aktif'){
+      tarikhWrap.style.display = 'grid';
+      document.getElementById('e_tarikhmula').value = app.tarikhMula || '';
+      document.getElementById('e_tarikhtamat').value = app.tarikhTamat || '';
+    } else {
+      tarikhWrap.style.display = 'none';
+    }
+    document.getElementById('editOverlay').classList.add('show');
+  }
+  document.getElementById('editCancel').addEventListener('click', ()=> document.getElementById('editOverlay').classList.remove('show'));
+  document.getElementById('editForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const id = document.getElementById('e_id').value;
+    const app = applications.find(a=>a.id===id);
+    if(!app) return;
+    const btn = document.getElementById('btnSaveEdit');
+    btn.disabled = true;
+    try{
+      const patch = {
+        nama: document.getElementById('e_nama').value.trim(),
+        maktab: document.getElementById('e_maktab').value.trim(),
+        ic: document.getElementById('e_ic').value.trim(),
+        emel: document.getElementById('e_emel').value.trim(),
+        homeroom: document.getElementById('e_homeroom').value.trim(),
+        kelas: document.getElementById('e_kelas').value.trim(),
+        jenama: document.getElementById('e_jenama').value.trim(),
+        model: document.getElementById('e_model').value.trim(),
+        warna: document.getElementById('e_warna').value.trim(),
+        imei: document.getElementById('e_imei').value.trim() || null,
+        notelefon: document.getElementById('e_notelefon').value.trim()
+      };
+      const newSurat = document.getElementById('e_surat').files[0];
+      if(newSurat){
+        const path = id + '/' + newSurat.name;
+        const { error: upErr } = await sb.storage.from('surat-kebenaran').upload(path, newSurat, { upsert:true });
+        if(upErr) throw new Error('Muat naik surat gagal: ' + upErr.message);
+        patch.surat_path = path;
+        patch.surat_nama = newSurat.name;
+      }
+      if(app.status === 'Aktif'){
+        const newMula = document.getElementById('e_tarikhmula').value;
+        const newTamat = document.getElementById('e_tarikhtamat').value;
+        if(newMula) patch.tarikh_mula = newMula;
+        if(newTamat) patch.tarikh_tamat = newTamat;
+      }
+      const { error } = await sb.from('applications').update(patch).eq('id', id);
+      if(error) throw new Error(error.message);
+      document.getElementById('editOverlay').classList.remove('show');
+      toast('Rekod ' + patch.nama + ' dikemaskini.');
+      await refreshAndRenderAll();
+    } catch(err){
+      console.error(err);
+      toast(err.message || 'Kemaskini gagal.', true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  async function removeRecord(id){
+    const app = applications.find(a=>a.id===id);
+    if(!app) return;
+    const ok = window.confirm('Padam rekod pendaftaran ' + app.nama + '? Tindakan ini tidak boleh diundur.');
+    if(!ok) return;
+    const { error } = await sb.from('applications').delete().eq('id', id);
+    if(error){ toast('Padam gagal: ' + error.message, true); return; }
+    toast('Rekod dipadam.');
+    await refreshAndRenderAll();
+  }
+
+  // ---------- E-Tracker ----------
+  function renderTracker(){
+    const list = applications;
+    renderStatCards('statCards', list, false);
+    const search = document.getElementById('trkSearch').value.toLowerCase();
+    const filter = document.getElementById('trkFilter').value;
+    const body = document.getElementById('trackerBody');
+    body.innerHTML = '';
+    const rows = list.filter(a=>{
+      const st = computeStatus(a);
+      const matchesFilter = !filter || st === filter;
+      const hay = (a.nama+' '+a.kelas+' '+a.model).toLowerCase();
+      return matchesFilter && hay.includes(search);
+    });
+    document.getElementById('trackerEmpty').style.display = rows.length ? 'none' : 'block';
+    rows.forEach(a=>{
+      const st = computeStatus(a);
+      const daysLeft = a.tarikhTamat ? daysBetween(todayStr(), a.tarikhTamat) : null;
+      let bakiTxt = '-';
+      if(daysLeft !== null){
+        bakiTxt = daysLeft >= 0 ? daysLeft + ' hari lagi' : Math.abs(daysLeft) + ' hari lepas';
+      }
+      const card = document.createElement('div');
+      card.className = 'reccard';
+      card.innerHTML = `
+        <div class="reccard-top">
+          <div>
+            <div class="reccard-name">${escHtml(a.nama)}</div>
+            <div class="reccard-meta">${escHtml(a.homeroom)} &middot; ${escHtml(a.kelas)}</div>
+          </div>
+          <span class="badge ${badgeClass(st)}">${st}</span>
+        </div>
+        <div class="reccard-meta">${escHtml(a.jenama)} ${escHtml(a.model)}</div>
+        <div class="reccard-meta">${fmtDate(a.tarikhMula)} &rarr; ${fmtDate(a.tarikhTamat)} &middot; ${bakiTxt}</div>
+      `;
+      body.appendChild(card);
+    });
+  }
+  document.getElementById('trkSearch').addEventListener('input', renderTracker);
+  document.getElementById('trkFilter').addEventListener('change', renderTracker);
+  document.getElementById('simDate').addEventListener('change', function(){
+    simDate = this.value || null;
+    toast(simDate ? ('Tarikh simulasi ditetapkan: ' + fmtDate(simDate)) : 'Kembali ke tarikh sebenar.');
+    renderAll();
+  });
+  document.getElementById('resetSim').addEventListener('click', function(){
+    simDate = null;
+    document.getElementById('simDate').value = '';
+    toast('Kembali ke tarikh sebenar.');
+    renderAll();
+  });
+
+  // ---------- Laporan ----------
+  function breakdownBy(list, key){
+    const map = {};
+    list.forEach(a=>{
+      const k = a[key];
+      if(!map[k]) map[k] = { 'Aktif':0,'Akan Tamat':0,'Tamat Tempoh':0,'Menunggu Kelulusan':0,'Ditolak':0, total:0 };
+      const st = computeStatus(a);
+      map[k][st]++;
+      map[k].total++;
+    });
+    return map;
+  }
+  function renderLaporan(){
+    const list = applications;
+    renderStatCards('laporanStats', list, true);
+
+    const byKelas = breakdownBy(list, 'kelas');
+    document.getElementById('laporanKelasBody').innerHTML = Object.keys(byKelas).sort().map(k=>{
+      const r = byKelas[k];
+      return `<tr><td>${escHtml(k)}</td><td>${r['Aktif']}</td><td>${r['Akan Tamat']}</td><td>${r['Tamat Tempoh']}</td><td>${r['Menunggu Kelulusan']}</td><td>${r['Ditolak']}</td><td><b>${r.total}</b></td></tr>`;
+    }).join('') || '<tr><td colspan="7" style="text-align:center; color:var(--muted);">Tiada data.</td></tr>';
+
+    const byHomeroom = breakdownBy(list, 'homeroom');
+    document.getElementById('laporanHomeroomBody').innerHTML = Object.keys(byHomeroom).sort().map(k=>{
+      const r = byHomeroom[k];
+      return `<tr><td>${escHtml(k)}</td><td>${r['Aktif']}</td><td>${r['Akan Tamat']}</td><td>${r['Tamat Tempoh']}</td><td>${r['Menunggu Kelulusan']}</td><td>${r['Ditolak']}</td><td><b>${r.total}</b></td></tr>`;
+    }).join('') || '<tr><td colspan="7" style="text-align:center; color:var(--muted);">Tiada data.</td></tr>';
+  }
+  document.getElementById('btnPrint').addEventListener('click', ()=> window.print());
+  document.getElementById('btnCSV').addEventListener('click', function(){
+    const list = applications;
+    const headers = ['Nama','No Maktab','No IC','Emel','Homeroom','Kelas','Jenama','Model','Warna','IMEI','No Telefon','Tarikh Mohon','Tarikh Mula','Tarikh Tamat','Status'];
+    const lines = [headers.join(',')];
+    list.forEach(a=>{
+      const st = computeStatus(a);
+      const row = [a.nama,a.maktab,a.ic,a.emel,a.homeroom,a.kelas,a.jenama,a.model,a.warna,a.imei,a.notelefon,a.tarikhMohon,a.tarikhMula||'',a.tarikhTamat||'',st]
+        .map(v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"');
+      lines.push(row.join(','));
+    });
+    const csv = lines.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'laporan_pendaftaran_telefon_mrsm_sas.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast('CSV laporan dimuat turun.');
+  });
+
+  // ---------- Kelulusan (Admin) ----------
+  async function sendNotificationEmail(app, jenisAksi){
+    if(!app.emel) return;
+    try{
+      const { error } = await sb.functions.invoke('send-notification-email', {
+        body: {
+          jenisAksi,
+          emel: app.emel, nama: app.nama, maktab: app.maktab, kelas: app.kelas, homeroom: app.homeroom,
+          jenama: app.jenama, model: app.model, warna: app.warna,
+          tarikhMula: app.tarikhMula, tarikhTamat: app.tarikhTamat
+        }
+      });
+      if(error){ toast('Rekod dikemaskini, tetapi emel notifikasi gagal dihantar.', true); }
+    } catch(err){
+      console.error(err);
+      toast('Rekod dikemaskini, tetapi emel notifikasi gagal dihantar.', true);
+    }
+  }
+
+  async function approve(id, mula, tamat){
+    if(!mula || !tamat || tamat < mula){
+      toast('Tarikh mula/akhir tidak sah. Sila semak semula.', true);
+      return;
+    }
+    const patch = {
+      status: 'Aktif', tarikh_mula: mula, tarikh_tamat: tamat,
+      diluluskan_oleh: session ? session.user.id : null
+    };
+    const { error } = await sb.from('applications').update(patch).eq('id', id);
+    if(error){ toast('Kelulusan gagal: ' + error.message, true); return; }
+    toast('Permohonan diluluskan (' + fmtDate(mula) + ' - ' + fmtDate(tamat) + ').');
+    const app = applications.find(a=>a.id===id);
+    if(app){ await sendNotificationEmail({ ...app, tarikhMula: mula, tarikhTamat: tamat }, 'approve'); }
+    await refreshAndRenderAll();
+  }
+  async function reject(id){
+    const { error } = await sb.from('applications').update({ status:'Ditolak' }).eq('id', id);
+    if(error){ toast('Tindakan gagal: ' + error.message, true); return; }
+    toast('Permohonan ditolak.');
+    const app = applications.find(a=>a.id===id);
+    if(app){ await sendNotificationEmail(app, 'reject'); }
+    await refreshAndRenderAll();
+  }
+
+  function renderKelulusan(){
+    const list = applications;
+    renderStatCards('adminStatCards', list, true);
+    const pendingWrap = document.getElementById('pendingList');
+    const pending = list.filter(a=>a.status==='Menunggu Kelulusan');
+    document.getElementById('pendingEmpty').style.display = pending.length ? 'none' : 'block';
+    pendingWrap.innerHTML = '';
+    pending.forEach(a=>{
+      const row = document.createElement('div');
+      row.className = 'reccard';
+      const suratLine = a.suratPath
+        ? `<button class="btn btn-ghost btn-sm" data-viewsurat="${escHtml(a.suratPath)}">Lihat Surat</button>`
+        : '<span style="color:var(--faint); font-size:.78rem;">Tiada surat dimuat naik</span>';
+      row.innerHTML = `
+        <div class="reccard-top">
+          <div>
+            <div class="reccard-name">${escHtml(a.nama)}</div>
+            <div class="reccard-meta">${escHtml(a.maktab)} &middot; ${escHtml(a.kelas)} &middot; ${escHtml(a.homeroom)}</div>
+          </div>
+          <span class="badge b-menunggu">Menunggu</span>
+        </div>
+        <div class="reccard-meta">${escHtml(a.jenama)} ${escHtml(a.model)} &middot; ${escHtml(a.warna)}</div>
+        <div class="reccard-meta">Emel: ${escHtml(a.emel)} &middot; Dimohon: ${fmtDate(a.tarikhMohon)}</div>
+        <div class="reccard-actions">${suratLine}</div>
+        <div class="field" style="margin-top:10px;">
+          <label>Tarikh Mula</label>
+          <input type="date" data-mula-for="${a.id}" value="${escHtml(a.tarikhMulaDiminta || '')}">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Tarikh Akhir</label>
+          <input type="date" data-akhir-for="${a.id}" value="${escHtml(a.tarikhAkhirDiminta || '')}">
+        </div>
+        <div class="reccard-actions">
+          <button class="btn btn-ok btn-sm" data-act="approve" data-id="${a.id}">Luluskan</button>
+          <button class="btn btn-bad btn-sm" data-act="reject" data-id="${a.id}">Tolak</button>
+        </div>
+      `;
+      pendingWrap.appendChild(row);
+    });
+    pendingWrap.querySelectorAll('[data-viewsurat]').forEach(b=> b.addEventListener('click', ()=> viewSurat(b.dataset.viewsurat)));
+    pendingWrap.querySelectorAll('[data-act="approve"]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.dataset.id;
+        const mulaInput = pendingWrap.querySelector(`input[data-mula-for="${id}"]`);
+        const akhirInput = pendingWrap.querySelector(`input[data-akhir-for="${id}"]`);
+        approve(id, mulaInput.value, akhirInput.value);
+      });
+    });
+    pendingWrap.querySelectorAll('[data-act="reject"]').forEach(btn=>{
+      btn.addEventListener('click', ()=> reject(btn.dataset.id));
+    });
+  }
+
+  // ---------- Master render ----------
+  async function renderAll(){
+    renderDashboard();
+    renderSemakan();
+    renderTracker();
+    renderLaporan();
+    if(isAdminRole(currentRole)) renderKelulusan();
+  }
+  async function refreshAndRenderAll(){
+    await fetchApplications();
+    await renderAll();
+  }
+
+  // ---------- Init ----------
+  (async function init(){
+    const { data: { session: sess } } = await sb.auth.getSession();
+    session = sess;
+    await refreshProfile();
+    currentRole = profile ? profile.role : 'pelajar';
+    renderAuthStatus();
+    await fetchApplications();
+    await applyRoleVisibility();
+  })();
+})();
+</script>
+</body>
+</html>
