@@ -107,6 +107,7 @@
   .stat.s-warn .n{color:var(--warn);}
   .stat.s-bad .n{color:var(--bad);}
   .stat.s-serious .n{color:var(--serious);}
+  .stat.s-info .n{color:var(--brand-dark);}
   table{width:100%; border-collapse:collapse; font-size:.78rem;}
   th{
     text-align:left; padding:9px 6px; border-bottom:2px solid var(--line);
@@ -116,6 +117,7 @@
   tr:last-child td{border-bottom:none;}
   .badge{display:inline-block; padding:4px 10px; border-radius:999px; font-size:.7rem; font-weight:700; white-space:nowrap;}
   .b-aktif{background:var(--ok-bg); color:var(--ok-text);}
+  .b-tidakaktif{background:var(--brand-light); color:var(--brand-dark);}
   .b-tamat{background:var(--bad-bg); color:var(--bad);}
   .b-menunggu{background:var(--grey-bg); color:var(--grey);}
   .b-ditolak{background:var(--serious-bg); color:var(--serious);}
@@ -297,6 +299,7 @@
         <select id="semFilter">
           <option value="">Semua Status</option>
           <option value="Aktif">Aktif</option>
+          <option value="Tidak Aktif">Tidak Aktif</option>
           <option value="Tamat">Tamat</option>
           <option value="Menunggu Giliran">Menunggu Giliran</option>
           <option value="Ditolak">Ditolak</option>
@@ -320,6 +323,7 @@
         <select id="trkFilter">
           <option value="">Semua Status</option>
           <option value="Aktif">Aktif</option>
+          <option value="Tidak Aktif">Tidak Aktif</option>
           <option value="Tamat">Tamat</option>
           <option value="Menunggu Giliran">Menunggu Giliran</option>
           <option value="Ditolak">Ditolak</option>
@@ -350,7 +354,7 @@
       <h2>Pecahan mengikut Kelas</h2>
       <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>Kelas</th><th>Aktif</th><th>Tamat</th><th>Menunggu Giliran</th><th>Ditolak</th><th>Jumlah</th></tr></thead>
+          <thead><tr><th>Kelas</th><th>Aktif</th><th>Tidak Aktif</th><th>Tamat</th><th>Menunggu Giliran</th><th>Ditolak</th><th>Jumlah</th></tr></thead>
           <tbody id="laporanKelasBody"></tbody>
         </table>
       </div>
@@ -360,7 +364,7 @@
       <h2>Pecahan mengikut Homeroom</h2>
       <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>Homeroom</th><th>Aktif</th><th>Tamat</th><th>Menunggu Giliran</th><th>Ditolak</th><th>Jumlah</th></tr></thead>
+          <thead><tr><th>Homeroom</th><th>Aktif</th><th>Tidak Aktif</th><th>Tamat</th><th>Menunggu Giliran</th><th>Ditolak</th><th>Jumlah</th></tr></thead>
           <tbody id="laporanHomeroomBody"></tbody>
         </table>
       </div>
@@ -575,17 +579,22 @@
   }
 
   // ---------- Status computation (client-side, honours "Uji Tarikh") ----------
-  // 4 status sahaja: Aktif, Tamat, Menunggu Giliran, Ditolak.
+  // Menunggu Giliran / Ditolak datang terus dari status DB. Bagi permohonan yang
+  // diluluskan ("Aktif" dalam DB), status paparan bergantung kepada tarikh mula & tamat:
+  //   - belum sampai tarikh mula  -> "Tidak Aktif" (diluluskan, belum berkuat kuasa)
+  //   - sudah lepas tarikh tamat  -> "Tamat"
+  //   - selain itu                -> "Aktif"
   function computeStatus(app){
     if(app.status === 'Menunggu Giliran' || app.status === 'Ditolak') return app.status;
     const now = todayStr();
+    if(app.tarikhMula && now < app.tarikhMula) return 'Tidak Aktif';
     const daysLeft = daysBetween(now, app.tarikhTamat);
     if(daysLeft < 0) return 'Tamat';
     return 'Aktif';
   }
   function badgeClass(status){
     return {
-      'Aktif':'b-aktif','Tamat':'b-tamat',
+      'Aktif':'b-aktif','Tidak Aktif':'b-tidakaktif','Tamat':'b-tamat',
       'Menunggu Giliran':'b-menunggu','Ditolak':'b-ditolak'
     }[status] || 'b-menunggu';
   }
@@ -828,6 +837,17 @@
               ${PERATURAN_RINGKAS.map(p=>`<li style="margin-bottom:4px;">${escHtml(p)}</li>`).join('')}
             </ul>
           </div>`;
+      } else if(st === 'Tidak Aktif'){
+        extra = `
+          <div style="margin-top:10px; font-size:.85rem;">
+            Permohonan telah <strong>diluluskan</strong> tetapi belum berkuat kuasa. Kebenaran bermula pada <strong>${fmtDate(r.tarikh_mula)}</strong> sehingga <strong>${fmtDate(r.tarikh_tamat)}</strong>.
+          </div>
+          <div class="note" style="margin-top:10px;">
+            <strong>Peraturan Ringkas (berkuat kuasa mulai tarikh di atas):</strong>
+            <ul style="margin:8px 0 0; padding-left:18px;">
+              ${PERATURAN_RINGKAS.map(p=>`<li style="margin-bottom:4px;">${escHtml(p)}</li>`).join('')}
+            </ul>
+          </div>`;
       } else if(st === 'Tamat'){
         extra = `<div style="margin-top:10px; font-size:.85rem;">Kebenaran telah tamat pada <strong>${fmtDate(r.tarikh_tamat)}</strong>. Sila hantar permohonan baharu jika masih diperlukan.</div>`;
       } else if(st === 'Ditolak'){
@@ -870,7 +890,7 @@
 
   // ---------- Stat helpers ----------
   function countByStatus(list){
-    const counts = { 'Aktif':0,'Tamat':0,'Menunggu Giliran':0,'Ditolak':0 };
+    const counts = { 'Aktif':0,'Tidak Aktif':0,'Tamat':0,'Menunggu Giliran':0,'Ditolak':0 };
     list.forEach(a => { const s = computeStatus(a); counts[s] = (counts[s]||0) + 1; });
     return counts;
   }
@@ -881,6 +901,7 @@
     if(withTotal) html += `<div class="stat"><div class="n">${total}</div><div class="l">JUMLAH KESELURUHAN</div></div>`;
     html += `
       <div class="stat s-ok"><div class="n">${c['Aktif']}</div><div class="l">AKTIF</div></div>
+      <div class="stat s-info"><div class="n">${c['Tidak Aktif']}</div><div class="l">TIDAK AKTIF</div></div>
       <div class="stat s-bad"><div class="n">${c['Tamat']}</div><div class="l">TAMAT</div></div>
       <div class="stat"><div class="n">${c['Menunggu Giliran']}</div><div class="l">MENUNGGU GILIRAN</div></div>
       <div class="stat s-serious"><div class="n">${c['Ditolak']}</div><div class="l">DITOLAK</div></div>
@@ -1081,7 +1102,7 @@
     const map = {};
     list.forEach(a=>{
       const k = a[key];
-      if(!map[k]) map[k] = { 'Aktif':0,'Tamat':0,'Menunggu Giliran':0,'Ditolak':0, total:0 };
+      if(!map[k]) map[k] = { 'Aktif':0,'Tidak Aktif':0,'Tamat':0,'Menunggu Giliran':0,'Ditolak':0, total:0 };
       const st = computeStatus(a);
       map[k][st]++;
       map[k].total++;
@@ -1095,14 +1116,14 @@
     const byKelas = breakdownBy(list, 'kelas');
     document.getElementById('laporanKelasBody').innerHTML = Object.keys(byKelas).sort().map(k=>{
       const r = byKelas[k];
-      return `<tr><td>${escHtml(k)}</td><td>${r['Aktif']}</td><td>${r['Tamat']}</td><td>${r['Menunggu Giliran']}</td><td>${r['Ditolak']}</td><td><b>${r.total}</b></td></tr>`;
-    }).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--muted);">Tiada data.</td></tr>';
+      return `<tr><td>${escHtml(k)}</td><td>${r['Aktif']}</td><td>${r['Tidak Aktif']}</td><td>${r['Tamat']}</td><td>${r['Menunggu Giliran']}</td><td>${r['Ditolak']}</td><td><b>${r.total}</b></td></tr>`;
+    }).join('') || '<tr><td colspan="7" style="text-align:center; color:var(--muted);">Tiada data.</td></tr>';
 
     const byHomeroom = breakdownBy(list, 'homeroom');
     document.getElementById('laporanHomeroomBody').innerHTML = Object.keys(byHomeroom).sort().map(k=>{
       const r = byHomeroom[k];
-      return `<tr><td>${escHtml(k)}</td><td>${r['Aktif']}</td><td>${r['Tamat']}</td><td>${r['Menunggu Giliran']}</td><td>${r['Ditolak']}</td><td><b>${r.total}</b></td></tr>`;
-    }).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--muted);">Tiada data.</td></tr>';
+      return `<tr><td>${escHtml(k)}</td><td>${r['Aktif']}</td><td>${r['Tidak Aktif']}</td><td>${r['Tamat']}</td><td>${r['Menunggu Giliran']}</td><td>${r['Ditolak']}</td><td><b>${r.total}</b></td></tr>`;
+    }).join('') || '<tr><td colspan="7" style="text-align:center; color:var(--muted);">Tiada data.</td></tr>';
   }
   document.getElementById('btnPrint').addEventListener('click', ()=> window.print());
   document.getElementById('btnCSV').addEventListener('click', function(){
