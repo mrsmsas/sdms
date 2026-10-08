@@ -271,17 +271,11 @@
   <section class="view" id="view-semakstatus">
     <div class="card">
       <h2>Semak Status Permohonan</h2>
-      <p class="sub">Masukkan No. Maktab dan No. Kad Pengenalan yang sama seperti diisi semasa mendaftar untuk semak status permohonan anda. Tiada log masuk diperlukan.</p>
+      <p class="sub">Masukkan No. Maktab yang sama seperti diisi semasa mendaftar untuk semak status permohonan anda. Tiada log masuk diperlukan.</p>
       <form id="statusForm">
-        <div class="grid2">
-          <div class="field">
-            <label>No. Maktab (No. Pelajar) *</label>
-            <input type="text" id="s_maktab" required placeholder="Contoh: MRS230145">
-          </div>
-          <div class="field">
-            <label>No. Kad Pengenalan *</label>
-            <input type="text" id="s_ic" required placeholder="Contoh: 080101-10-1234">
-          </div>
+        <div class="field">
+          <label>No. Maktab (No. Pelajar) *</label>
+          <input type="text" id="s_maktab" required placeholder="Contoh: MRS230145">
         </div>
         <button type="submit" class="btn btn-primary" id="btnCheckStatus">Semak Status</button>
       </form>
@@ -388,7 +382,7 @@
 
   <!-- ================= URUS PENGGUNA (ADMIN) ================= -->
   <section class="view" id="view-urus-pengguna">
-    <div class="card">
+    <div class="card" id="createUserCard">
       <h2>Cipta Akaun Guru</h2>
       <p class="sub">Admin cipta akaun log masuk untuk guru secara terus di sini &mdash; guru tidak perlu (dan tidak boleh) daftar akaun sendiri.</p>
       <form id="createUserForm">
@@ -418,6 +412,10 @@
       </form>
     </div>
 
+    <div class="card" id="noCreateUserNotice" style="display:none;">
+      <p class="note">Peranan Timbalan Pengetua tidak boleh tambah pengguna baharu. Sila hubungi Ketua Warden untuk cipta akaun guru/admin baharu.</p>
+    </div>
+
     <div class="card">
       <h2>Senarai Pengguna</h2>
       <p class="sub">Semua akaun guru &amp; admin dalam sistem.</p>
@@ -434,7 +432,7 @@
   <button data-view="borang" data-roles="pelajar,guru,ketua_warden,timbalan_pengetua" class="active"><span class="ic">📝</span>Borang</button>
   <button data-view="semakstatus" data-roles="pelajar,guru,ketua_warden,timbalan_pengetua"><span class="ic">🔍</span>Semak</button>
   <button data-view="semakan" data-roles="guru,ketua_warden,timbalan_pengetua"><span class="ic">📋</span>Semakan</button>
-  <button data-view="tracker" data-roles="guru,ketua_warden,timbalan_pengetua"><span class="ic">⏱️</span>Tracker</button>
+  <button data-view="tracker" data-roles="ketua_warden,timbalan_pengetua"><span class="ic">⏱️</span>Tracker</button>
   <button data-view="laporan" data-roles="ketua_warden,timbalan_pengetua"><span class="ic">📈</span>Laporan</button>
   <button data-view="kelulusan" data-roles="ketua_warden,timbalan_pengetua"><span class="ic">✅</span>Lulus</button>
   <button data-view="urus-pengguna" data-roles="ketua_warden,timbalan_pengetua"><span class="ic">👤</span>Pengguna</button>
@@ -557,15 +555,16 @@
   };
   const roleHints = {
     pelajar: 'Akses: hantar Borang Pendaftaran &amp; Semak Status (tanpa log masuk).',
-    guru: 'Akses (Guru): Borang, Semak Status, Semakan &amp; E-Tracker.',
-    ketua_warden: 'Akses (Admin): semua modul termasuk Laporan, Kelulusan &amp; Urus Pengguna.',
-    timbalan_pengetua: 'Akses (Admin): semua modul termasuk Laporan, Kelulusan &amp; Urus Pengguna.'
+    guru: 'Akses (Guru): Borang, Semak Status &amp; Semakan sahaja.',
+    ketua_warden: 'Akses (Admin Induk): semua modul termasuk Laporan, Kelulusan &amp; Urus Pengguna (boleh tambah pengguna baharu).',
+    timbalan_pengetua: 'Akses (Admin): semua modul termasuk Laporan &amp; Kelulusan. Urus Pengguna terhad &mdash; tidak boleh tambah pengguna baharu.'
   };
   const defaultViewByRole = {
     pelajar: 'borang', guru: 'semakan',
     ketua_warden: 'kelulusan', timbalan_pengetua: 'kelulusan'
   };
   function isAdminRole(role){ return role === 'ketua_warden' || role === 'timbalan_pengetua'; }
+  function canCreateUsers(role){ return role === 'ketua_warden'; }
 
   // ---------- Row mapping (DB snake_case <-> app camelCase) ----------
   function mapRow(r){
@@ -710,6 +709,14 @@
       ? 'Akaun anda belum ditetapkan peranan. Sila hubungi Ketua Warden/Timbalan Pengetua.'
       : (roleHints[currentRole] || '');
 
+    const createCard = document.getElementById('createUserCard');
+    const noCreateNotice = document.getElementById('noCreateUserNotice');
+    if(createCard && noCreateNotice){
+      const allowCreate = !gated && canCreateUsers(currentRole);
+      createCard.style.display = allowCreate ? '' : 'none';
+      noCreateNotice.style.display = (!gated && isAdminRole(currentRole) && !allowCreate) ? '' : 'none';
+    }
+
     const activeBtn = document.querySelector('nav button.active');
     const activeAllowed = activeBtn && !gated && activeBtn.dataset.roles.split(',').includes(currentRole);
     if(!activeAllowed){
@@ -820,7 +827,7 @@
   function renderStatusResults(rows){
     const el = document.getElementById('statusResults');
     if(!rows || !rows.length){
-      el.innerHTML = '<div class="empty">Tiada rekod dijumpai. Sila semak semula No. Maktab &amp; No. Kad Pengenalan yang dimasukkan.</div>';
+      el.innerHTML = '<div class="empty">Tiada rekod dijumpai. Sila semak semula No. Maktab yang dimasukkan.</div>';
       return;
     }
     el.innerHTML = rows.map(r=>{
@@ -875,8 +882,7 @@
     btn.textContent = 'Menyemak...';
     try{
       const maktab = document.getElementById('s_maktab').value.trim();
-      const ic = document.getElementById('s_ic').value.trim();
-      const { data, error } = await sb.rpc('check_application_status', { p_maktab: maktab, p_ic: ic });
+      const { data, error } = await sb.rpc('check_application_status', { p_maktab: maktab });
       if(error){ throw new Error(error.message); }
       renderStatusResults(data);
     } catch(err){
@@ -1321,6 +1327,10 @@
     e.preventDefault();
     const errEl = document.getElementById('createUserError');
     errEl.textContent = '';
+    if(!canCreateUsers(currentRole)){
+      errEl.textContent = 'Hanya Ketua Warden boleh tambah pengguna baharu.';
+      return;
+    }
     const nama = document.getElementById('nu_nama').value.trim();
     const emel = document.getElementById('nu_emel').value.trim();
     const password = document.getElementById('nu_password').value;
